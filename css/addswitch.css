@@ -1,0 +1,125 @@
+/* Стили для модального окна создания свитча */
+#create-switch-modal .modal-content {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    width: 80%;
+    max-width: 1320px; /* Увеличено на 10% с 1200px */
+    background-color: #333;
+    padding: 20px;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+}
+
+#create-switch-modal .column {
+    flex: 1;
+    border: 1px solid #FFC107;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #444;
+}
+
+#create-switch-modal .column h3 {
+    text-align: center;
+    color: #FFC107;
+    margin-bottom: 15px;
+}
+
+/* Стили для элементов формы */
+#create-switch-modal .form-group {
+    margin-bottom: 15px;
+}
+
+#create-switch-modal .form-group label {
+    color: #FFC107;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#create-switch-modal .form-group textarea,
+#create-switch-modal .form-group input,
+#create-switch-modal .form-group select {
+    width: 100%;
+    padding: 10px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+#create-switch-modal .form-group textarea {
+    resize: none;
+}
+
+#create-switch-modal .form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23FFC107" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+#create-switch-modal .form-group input:focus,
+#create-switch-modal .form-group textarea:focus,
+#create-switch-modal .form-group select:focus {
+    outline: none;
+    border-color: #FFC107;
+}
+
+/* Стили для flex-контейнеров */
+#create-switch-modal .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+#create-switch-modal .form-row .form-group {
+    flex: 1;
+}
+
+/* Стили для кнопок */
+#create-switch-modal .modal-actions button,
+#create-switch-modal button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+#create-switch-modal .modal-actions button:hover,
+#create-switch-modal button:hover {
+    background-color: #555;
+}
+
+/* Стили для кнопки Прошить */
+#create-switch-modal #flash-button {
+    align-self: flex-end;
+}
+
+/* Стили для кнопки Отмена */
+#create-switch-modal .cancel-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#create-switch-modal #cancel-button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+#create-switch-modal #cancel-button:hover {
+    background-color: #555;
+}

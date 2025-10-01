@@ -1,418 +1,336 @@
+// main.js
+const openMaps = []; // Массив открытых карт
+let activeMapId = null; // ID активной карты
+let selectedMapId = null; // Выбранная карта в модальном окне
+
+// Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
-    const svg = d3.select('#map');
+    loadOpenMapsFromCookies(); // Загружаем открытые карты из cookies
+    initializeEventListeners();
+    updateTabs();
+    if (openMaps.length > 0) {
+        openMap(openMaps[0].id); // Открываем первую карту из cookies
+    }
+});
+
+// Установка обработчиков событий
+function initializeEventListeners() {
+    // Обработчик для создания новой карты
+    d3.select('#create-map').on('click', () => showMapNameModal());
+    // Обработчик для открытия карты
+    d3.select('#open-map').on('click', () => showOpenMapModal());
+    // Обработчик для сохранения карты
+    d3.select('#save-map').on('click', () => saveMap());
+    // Обработчик для редактирования карты
+    d3.select('#edit-map').on('click', () => toggleEditMode());
+    // Обработчик контекстного меню
+    d3.select('#map').on('contextmenu', showContextMenu);
+}
+
+// Сохранение открытых карт в cookies
+function saveOpenMapsToCookies() {
+    document.cookie = `openMaps=${JSON.stringify(openMaps)}; path=/; max-age=86400`; // 24 часа
+}
+
+// Загрузка открытых карт из cookies
+function loadOpenMapsFromCookies() {
+    const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
+        const [key, value] = cookie.split('=');
+        acc[key] = value;
+        return acc;
+    }, {});
+    if (cookies.openMaps) {
+        try {
+            const maps = JSON.parse(cookies.openMaps);
+            openMaps.push(...maps);
+            activeMapId = openMaps.length > 0 ? openMaps[0].id : null;
+        } catch (error) {
+            console.error('Failed to parse openMaps from cookies:', error);
+        }
+    }
+}
+
+// Обновление вкладок
+async function updateTabs() {
     const tabs = d3.select('#tabs');
-    let isEditing = false;
-    let currentMapId = null;
-    let openMaps = [];
-    const mapNameModal = document.getElementById('map-name-modal');
-    const mapNameInput = document.getElementById('map-name-input');
-    const mapNameError = document.getElementById('map-name-error');
-    const mapNameOk = document.getElementById('map-name-ok');
-    const mapNameCancel = document.getElementById('map-name-cancel');
-    const openMapModal = document.getElementById('open-map-modal');
-    const mapListBody = d3.select('#map-list-body');
-    const openMapError = document.getElementById('open-map-error');
-    const openMapOk = document.getElementById('open-map-ok');
-    const openMapCancel = document.getElementById('open-map-cancel');
-    const contextMenu = document.getElementById('context-menu');
+    tabs.selectAll('button').remove();
 
-    // Функции для работы с куки
-    function setCookie(name, value, days = 30) {
-        const expires = new Date();
-        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-        document.cookie = `${name}=${encodeURIComponent(value)};expires=${expires.toUTCString()};path=/pinger`;
-    }
+    const tabSelection = tabs.selectAll('button')
+        .data(openMaps)
+        .enter()
+        .append('button')
+        .attr('class', 'tab-button')
+        .classed('active', d => d.id === activeMapId);
 
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-        return null;
-    }
+    // Добавляем текст вкладки
+    tabSelection.append('span')
+        .attr('class', 'tab-text')
+        .text(d => d.name || 'Unnamed');
 
-    // Восстановление открытых карт из куки
-    const userId = window.currentUser || 'unknown';
-    const savedMaps = getCookie(`openMaps_${userId}`);
-    if (savedMaps) {
-        openMaps = JSON.parse(savedMaps);
-    }
-    const savedCurrentMapId = getCookie(`currentMapId_${userId}`);
-    if (savedCurrentMapId && openMaps.includes(savedCurrentMapId)) {
-        currentMapId = savedCurrentMapId;
-        fetch(`/pinger/api.php?action=load_map&id=${currentMapId}`)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.text();
-            })
-            .then(text => {
-                console.log('Load map raw response:', text); // Отладка
-                const data = JSON.parse(text);
-                if (data.success) {
-                    svg.selectAll('*').remove();
-                    svg.append('g');
-                    // Добавьте код для отображения карты
-                    updateTabs();
-                } else {
-                    console.error('Load map failed:', data.error);
-                }
-            })
-            .catch(err => console.error('Load map error:', err));
-    }
-
-    // Настройка D3 zoom для перемещения по карте (зажатие ЛКМ)
-    const zoom = d3.zoom()
-        .scaleExtent([0.5, 2])
-        .filter(event => {
-            // Отключаем зум на двойной клик, пропуская только wheel и drag
-            return event.type !== 'dblclick';
-        })
-        .on('zoom', (event) => {
-            svg.selectAll('g').attr('transform', event.transform);
+    // Добавляем кнопку закрытия
+    tabSelection.append('span')
+        .attr('class', 'tab-close')
+        .html('✖')
+        .on('click', (event, d) => {
+            event.stopPropagation(); // Предотвращаем срабатывание клика по вкладке
+            closeTab(d.id);
         });
 
-    svg.call(zoom);
+    // Обработчик клика по вкладке
+    tabSelection.on('click', async (event, d) => {
+        try {
+            const response = await fetch(`/pinger/api.php?action=load_map&id=${d.id}`);
+            const mapData = await response.json();
 
-    // Показать контекстное меню на правую кнопку мыши
-    function showContextMenu(event) {
-        if (!isEditing) return;
-        event.preventDefault(); // Предотвращаем стандартное браузерное меню на ПКМ
-        contextMenu.style.display = 'block';
-        contextMenu.style.left = `${event.clientX}px`;
-        contextMenu.style.top = `${event.clientY}px`;
-    }
+            if (mapData.error) {
+                console.error('Load map failed:', mapData.error);
+                d3.select('#open-map-error').text(mapData.error).style('display', 'block');
+                return;
+            }
 
-    // Скрыть контекстное меню
-    function hideContextMenu() {
-        contextMenu.style.display = 'none';
-    }
+            console.log('Load map raw response:', mapData);
 
-    // Обработчик правой кнопки мыши для контекстного меню
-    svg.on('contextmenu', showContextMenu);
-    document.addEventListener('click', (e) => {
-        if (!contextMenu.contains(e.target)) {
-            hideContextMenu();
+            // Проверка наличия данных
+            if (!mapData.nodes || !mapData.links) {
+                console.error('Load map failed: Invalid map data');
+                d3.select('#open-map-error').text('Неверные данные карты').style('display', 'block');
+                return;
+            }
+
+            // Обновляем активную вкладку
+            activeMapId = d.id;
+            tabs.selectAll('button').classed('active', false);
+            d3.select(event.currentTarget).classed('active', true);
+
+            // Отрисовываем карту
+            renderMap(mapData);
+        } catch (error) {
+            console.error('Load map failed:', error);
+            d3.select('#open-map-error').text('Ошибка загрузки карты').style('display', 'block');
         }
     });
 
-    // Заглушки для пунктов контекстного меню
-    document.getElementById('create-switch').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-switch clicked'); // Отладка
-        alert('Создание свитча (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-planned-switch').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-planned-switch clicked'); // Отладка
-        alert('Создание планируемого свитча (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-client').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-client clicked'); // Отладка
-        alert('Создание клиента (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-line').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-line clicked'); // Отладка
-        alert('Создание линии (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-trunk').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-trunk clicked'); // Отладка
-        alert('Создание магистрали (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-soapbox').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-soapbox clicked'); // Отладка
-        alert('Создание мыльницы (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('create-table').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: create-table clicked'); // Отладка
-        alert('Создание таблицы (заглушка)');
-        hideContextMenu();
-    });
-    document.getElementById('map-settings').addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log('Context menu: map-settings clicked'); // Отладка
-        alert('Параметры карты (заглушка)');
-        hideContextMenu();
-    });
+    saveOpenMapsToCookies(); // Сохраняем открытые карты в cookies
+}
 
-    // Обновление вкладок
-    function updateTabs() {
-        tabs.selectAll('button').remove();
-        tabs.selectAll('button')
-            .data(openMaps)
+// Загрузка списка карт
+async function loadMapsList() {
+    try {
+        const response = await fetch('/pinger/api.php?action=list_maps');
+        const maps = await response.json();
+        console.log('Maps list:', maps);
+
+        // Обновляем модальное окно для открытия карт
+        const tableBody = d3.select('#map-list-body');
+        tableBody.selectAll('tr').remove();
+        tableBody.selectAll('tr')
+            .data(maps)
             .enter()
-            .append('button')
-            .text(d => d)
-            .classed('active', d => d === currentMapId)
-            .on('click', (e, mapId) => {
-                if (mapId !== currentMapId) {
-                    currentMapId = mapId;
-                    setCookie(`currentMapId_${userId}`, currentMapId);
-                    isEditing = false;
-                    document.getElementById('edit-map').classList.remove('active');
-                    fetch(`/pinger/api.php?action=load_map&id=${mapId}`)
-                        .then(res => {
-                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                            return res.text();
-                        })
-                        .then(text => {
-                            console.log('Load map raw response:', text); // Отладка
-                            const data = JSON.parse(text);
-                            if (data.success) {
-                                svg.selectAll('*').remove();
-                                svg.append('g');
-                                // Добавьте код для отображения карты
-                                updateTabs();
-                            } else {
-                                console.error('Load map failed:', data.error);
-                            }
-                        })
-                        .catch(err => console.error('Load map error:', err));
-                }
+            .append('tr')
+            .classed('selected', d => d.name === selectedMapId)
+            .html(d => `
+                <td>${d.name}</td>
+                <td>${new Date(d.mtime * 1000).toLocaleString('ru-RU')}</td>
+                <td>${d.last_modified_by || 'Неизвестно'}</td>
+            `)
+            .on('click', (event, d) => {
+                selectedMapId = d.name; // Сохраняем выбранный ID
+                tableBody.selectAll('tr').classed('selected', false);
+                d3.select(event.currentTarget).classed('selected', true);
             });
-        // Сохраняем openMaps в куки
-        setCookie(`openMaps_${userId}`, JSON.stringify(openMaps));
+    } catch (error) {
+        console.error('Failed to load maps list:', error);
+        d3.select('#open-map-error').text('Ошибка загрузки списка карт').style('display', 'block');
     }
+}
 
-    // Показать модальное окно для создания карты
-    function showMapNameModal(callback) {
-        console.log('Opening create map modal'); // Отладка
-        mapNameInput.value = '';
-        mapNameError.style.display = 'none';
-        mapNameModal.style.display = 'flex';
-        mapNameInput.focus();
+// Открытие карты
+async function openMap(mapId) {
+    try {
+        const response = await fetch(`/pinger/api.php?action=load_map&id=${mapId}`);
+        const mapData = await response.json();
 
-        mapNameOk.onclick = () => {
-            const mapId = mapNameInput.value.trim();
-            if (!mapId) {
-                mapNameError.textContent = 'Название карты не может быть пустым';
-                mapNameError.style.display = 'block';
-                return;
-            }
-            console.log('Checking map existence:', mapId); // Отладка
-            fetch('/pinger/api.php?action=list_maps')
-                .then(res => {
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    return res.text();
-                })
-                .then(text => {
-                    console.log('List maps raw response:', text); // Отладка
-                    const maps = JSON.parse(text);
-                    if (maps.some(m => m.name === mapId)) {
-                        mapNameError.textContent = 'Карта с таким именем уже существует';
-                        mapNameError.style.display = 'block';
-                    } else {
-                        mapNameModal.style.display = 'none';
-                        callback(mapId);
-                    }
-                })
-                .catch(err => {
-                    console.error('List maps error:', err);
-                    mapNameError.textContent = 'Ошибка проверки имени карты';
-                    mapNameError.style.display = 'block';
-                });
-        };
-
-        mapNameCancel.onclick = () => {
-            console.log('Create map modal cancelled'); // Отладка
-            mapNameModal.style.display = 'none';
-        };
-    }
-
-    // Показать модальное окно для открытия карты
-    function showOpenMapModal() {
-        console.log('Opening open map modal'); // Отладка
-        openMapError.style.display = 'none';
-        mapListBody.selectAll('tr').remove();
-        fetch('/pinger/api.php?action=list_maps')
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.text();
-            })
-            .then(text => {
-                console.log('List maps raw response:', text); // Отладка
-                const maps = JSON.parse(text);
-                if (maps.length === 0) {
-                    openMapError.textContent = 'Нет доступных карт';
-                    openMapError.style.display = 'block';
-                    return;
-                }
-                mapListBody.selectAll('tr')
-                    .data(maps)
-                    .enter()
-                    .append('tr')
-                    .on('click', (e, d) => {
-                        mapListBody.selectAll('tr').classed('selected', false);
-                        d3.select(e.currentTarget).classed('selected', true);
-                    })
-                    .html(d => `
-                        <td>${d.name}</td>
-                        <td>${new Date(d.mtime * 1000).toLocaleString('ru-RU')}</td>
-                        <td>${d.last_modified_by || 'Неизвестно'}</td>
-                    `);
-                openMapModal.style.display = 'flex';
-            })
-            .catch(err => {
-                console.error('List maps error:', err);
-                openMapError.textContent = 'Ошибка загрузки списка карт';
-                openMapError.style.display = 'block';
-            });
-
-        openMapOk.onclick = () => {
-            const selectedRow = mapListBody.select('tr.selected').node();
-            if (!selectedRow) {
-                openMapError.textContent = 'Выберите карту';
-                openMapError.style.display = 'block';
-                return;
-            }
-            const mapId = selectedRow.cells[0].textContent;
-            console.log('Opening map:', mapId); // Отладка
-            currentMapId = mapId;
-            setCookie(`currentMapId_${userId}`, currentMapId);
-            if (!openMaps.includes(mapId)) {
-                openMaps.push(mapId);
-                setCookie(`openMaps_${userId}`, JSON.stringify(openMaps));
-            }
-            fetch(`/pinger/api.php?action=load_map&id=${mapId}`)
-                .then(res => {
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    return res.text();
-                })
-                .then(text => {
-                    console.log('Load map raw response:', text); // Отладка
-                    const data = JSON.parse(text);
-                    if (data.success) {
-                        svg.selectAll('*').remove();
-                        svg.append('g');
-                        // Добавьте код для отображения карты
-                        isEditing = false;
-                        document.getElementById('edit-map').classList.remove('active');
-                        updateTabs();
-                        openMapModal.style.display = 'none';
-                    } else {
-                        console.error('Load map failed:', data.error);
-                        openMapError.textContent = 'Ошибка загрузки карты';
-                        openMapError.style.display = 'block';
-                    }
-                })
-                .catch(err => {
-                    console.error('Load map error:', err);
-                    openMapError.textContent = 'Ошибка загрузки карты';
-                    openMapError.style.display = 'block';
-                });
-        };
-
-        openMapCancel.onclick = () => {
-            console.log('Open map modal cancelled'); // Отладка
-            openMapModal.style.display = 'none';
-        };
-    }
-
-    // Инициализация кнопки редактирования
-    const editButton = document.getElementById('edit-map');
-    editButton.addEventListener('click', () => {
-        console.log('Edit map clicked, currentMapId:', currentMapId); // Отладка
-        if (!currentMapId) {
-            showMapNameModal((mapId) => {
-                currentMapId = mapId;
-                setCookie(`currentMapId_${userId}`, currentMapId);
-                if (!openMaps.includes(mapId)) {
-                    openMaps.push(mapId);
-                    setCookie(`openMaps_${userId}`, JSON.stringify(openMaps));
-                }
-                isEditing = true;
-                editButton.classList.add('active');
-                svg.selectAll('*').remove();
-                svg.append('g');
-                // Добавьте код для инициализации новой карты
-                updateTabs();
-            });
-        } else {
-            isEditing = !isEditing;
-            editButton.classList.toggle('active', isEditing);
-            if (!isEditing) {
-                saveMap(currentMapId);
-            }
+        if (mapData.error) {
+            console.error('Load map failed:', mapData.error);
+            d3.select('#open-map-error').text(mapData.error).style('display', 'block');
+            return;
         }
-    });
 
-    // Создание новой карты
-    document.getElementById('create-map').addEventListener('click', (e) => {
-        console.log('Create map clicked'); // Отладка
-        e.preventDefault();
-        showMapNameModal((mapId) => {
-            currentMapId = mapId;
-            setCookie(`currentMapId_${userId}`, currentMapId);
-            if (!openMaps.includes(mapId)) {
-                openMaps.push(mapId);
-                setCookie(`openMaps_${userId}`, JSON.stringify(openMaps));
-            }
-            svg.selectAll('*').remove();
-            svg.append('g');
-            isEditing = true;
-            editButton.classList.add('active');
-            // Добавьте код для инициализации новой карты
-            updateTabs();
-        });
-    });
+        console.log('Load map raw response:', mapData);
 
-    // Открытие карты
-    document.getElementById('open-map').addEventListener('click', (e) => {
-        console.log('Open map clicked'); // Отладка
-        e.preventDefault();
-        showOpenMapModal();
-    });
-
-    // Сохранение карты
-    document.getElementById('save-map').addEventListener('click', (e) => {
-        console.log('Save map clicked, currentMapId:', currentMapId); // Отладка
-        e.preventDefault();
-        if (currentMapId) {
-            saveMap(currentMapId);
-        } else {
-            alert('Сначала создайте или откройте карту');
+        if (!mapData.nodes || !mapData.links) {
+            console.error('Load map failed: Invalid map data');
+            d3.select('#open-map-error').text('Неверные данные карты').style('display', 'block');
+            return;
         }
-    });
 
-    function saveMap(mapId) {
-        const mapData = {
-            nodes: [],
-            links: [],
-            last_modified_by: window.currentUser || 'unknown'
-        };
-        fetch(`/pinger/api.php?action=save_map&id=${mapId}`, {
+        // Добавляем карту в openMaps
+        if (!openMaps.find(m => m.id === mapId)) {
+            openMaps.push({ id: mapId, name: mapId, active: true });
+        }
+        activeMapId = mapId;
+        renderMap(mapData);
+        updateTabs();
+        d3.select('#open-map-modal').style('display', 'none');
+        selectedMapId = null; // Сбрасываем выбор
+    } catch (error) {
+        console.error('Load map failed:', error);
+        d3.select('#open-map-error').text('Ошибка загрузки карты').style('display', 'block');
+    }
+}
+
+// Закрытие вкладки
+function closeTab(mapId) {
+    const index = openMaps.findIndex(m => m.id === mapId);
+    if (index !== -1) {
+        openMaps.splice(index, 1);
+    }
+    if (activeMapId === mapId) {
+        activeMapId = openMaps.length > 0 ? openMaps[0].id : null;
+        if (activeMapId) {
+            openMap(activeMapId);
+        } else {
+            clearMap();
+        }
+    }
+    updateTabs();
+}
+
+// Отрисовка карты
+function renderMap(mapData) {
+    const svg = d3.select('#map');
+    svg.selectAll('*').remove();
+
+    // Отрисовка узлов
+    const nodes = svg.selectAll('.node')
+        .data(mapData.nodes || [])
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', d => `translate(${d.x || 0},${d.y || 0})`);
+
+    nodes.append('rect')
+        .attr('width', 50)
+        .attr('height', 30)
+        .attr('fill', '#FFC107');
+
+    nodes.append('text')
+        .attr('dy', '0.35em')
+        .attr('text-anchor', 'middle')
+        .attr('x', 25)
+        .attr('y', 15)
+        .text(d => d.name || 'Node');
+
+    // Отрисовка связей
+    const links = svg.selectAll('.link')
+        .data(mapData.links || [])
+        .enter()
+        .append('line')
+        .attr('class', 'link')
+        .attr('x1', d => d.source.x || 0)
+        .attr('y1', d => d.source.y || 0)
+        .attr('x2', d => d.target.x || 0)
+        .attr('y2', d => d.target.y || 0)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2);
+}
+
+// Очистка карты
+function clearMap() {
+    d3.select('#map').selectAll('*').remove();
+}
+
+// Показать модальное окно для создания карты
+function showMapNameModal() {
+    d3.select('#map-name-modal').style('display', 'flex');
+    d3.select('#map-name-input').node().focus();
+    d3.select('#map-name-ok').on('click', () => {
+        const name = d3.select('#map-name-input').property('value').trim();
+        if (!name) {
+            d3.select('#map-name-error').text('Введите название карты').style('display', 'block');
+            return;
+        }
+        openMaps.push({ id: name, name, active: true });
+        activeMapId = name;
+        renderMap({ nodes: [], links: [] });
+        updateTabs();
+        d3.select('#map-name-modal').style('display', 'none');
+        d3.select('#map-name-input').property('value', '');
+        d3.select('#map-name-error').style('display', 'none');
+    });
+    d3.select('#map-name-cancel').on('click', () => {
+        d3.select('#map-name-modal').style('display', 'none');
+        d3.select('#map-name-input').property('value', '');
+        d3.select('#map-name-error').style('display', 'none');
+    });
+}
+
+// Показать модальное окно для открытия карты
+function showOpenMapModal() {
+    d3.select('#open-map-modal').style('display', 'flex');
+    loadMapsList();
+    d3.select('#open-map-ok').on('click', () => {
+        if (!selectedMapId) {
+            d3.select('#open-map-error').text('Выберите карту').style('display', 'block');
+            return;
+        }
+        openMap(selectedMapId);
+    });
+    d3.select('#open-map-cancel').on('click', () => {
+        d3.select('#open-map-modal').style('display', 'none');
+        d3.select('#open-map-error').style('display', 'none');
+        selectedMapId = null;
+    });
+}
+
+// Сохранение карты
+async function saveMap() {
+    if (!activeMapId) {
+        alert('Нет активной карты для сохранения');
+        return;
+    }
+    const mapData = {
+        nodes: [], // Здесь должна быть логика для получения текущих узлов
+        links: [], // Здесь должна быть логика для получения текущих связей
+        last_modified_by: window.currentUser
+    };
+    try {
+        const response = await fetch(`/pinger/api.php?action=save_map&id=${activeMapId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(mapData)
-        })
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.text();
-            })
-            .then(text => {
-                console.log('Save map raw response:', text); // Отладка
-                const data = JSON.parse(text);
-                if (data.success) {
-                    alert('Карта сохранена!');
-                } else {
-                    alert('Ошибка сохранения карты: ' + (data.error || 'Неизвестная ошибка'));
-                }
-            })
-            .catch(err => {
-                console.error('Save map error:', err);
-                alert('Ошибка сохранения карты: ' + err.message);
-            });
+        });
+        const result = await response.json();
+        if (result.error) {
+            console.error('Save map failed:', result.error);
+            alert('Ошибка сохранения карты');
+        } else {
+            alert('Карта успешно сохранена');
+        }
+    } catch (error) {
+        console.error('Save map failed:', error);
+        alert('Ошибка сохранения карты');
     }
+}
 
-    // Инициализация вкладок при загрузке
-    updateTabs();
-});
+// Режим редактирования
+function toggleEditMode() {
+    const editButton = d3.select('#edit-map');
+    const isEditing = editButton.classed('active');
+    editButton.classed('active', !isEditing);
+    // Добавить логику для включения/выключения редактирования
+}
+
+// Показать контекстное меню
+function showContextMenu(event) {
+    event.preventDefault();
+    const menu = d3.select('#context-menu');
+    menu.style('display', 'block')
+        .style('left', `${event.pageX}px`)
+        .style('top', `${event.pageY}px`);
+    // Скрыть меню при клике в другом месте
+    d3.select(document).on('click.context', () => {
+        menu.style('display', 'none');
+        d3.select(document).on('click.context', null);
+    });
+}

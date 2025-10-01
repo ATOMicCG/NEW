@@ -1,0 +1,17 @@
+{
+    "id": "model_68dce9a2da5fe",
+    "model_name": "DES 3200-10",
+    "olt": false,
+    "neobills": "neobills1",
+    "uplink": "10",
+    "ports_count": "10",
+    "mag_ports": "9-10",
+    "firmware": "v1.0",
+    "image": "model_68dce9a2da5fe.jpg",
+    "syntax": {
+        "Save": "save all",
+        "\u041e\u0431\u0449\u0438\u0435": "config loopdetect ports 1-8 state enable\nconfig loopdetect trap both\nconfig loopdetect log state enable\nenable loopdetect\nconfig ports 9-10 medium_type fiber speed auto\nenable syslog\nenable sntp\nconfig sntp primary 195.88.112.3\nconfig time_zone operator + hour 3 min 0\nconfig dst repeating s_week last s_day sun s_mth 3 s_time 3:00 e_week last e_day sun e_mth 10 e_time 4:00 offset 60\ncreate syslog host 1 ipaddress 192.168.100.50 severity informational facility local0 udp_port 514 state enable\nenable snmp\nenable snmp traps\nenable snmp linkchange_traps\nconfig snmp linkchange_traps ports all enable\ncreate snmp host 192.168.100.50 v2c public\nconfig filter dhcp_server ports 1-8 state enable\nconfig filter dhcp_server trap_log enable\nconf dst disable\ndisable web\nconfig traffic control 1-8 broadcast enable multicast enable action drop threshold 64\nconfig traffic control log state enable\nconfig traffic trap both\nconfig traffic_segmentation 1-10 forward_list %UPLINK%\nconfig traffic_segmentation %UPLINK% forward_list 1-10\nconfig terminal width 200\nconfig ddm power_unit dbm",
+        "Hostname": "config snmp system_name %NAME%\nconfig command_prompt %NAME%",
+        "Description": "conf ports %PORT% description %DESCTEXT%"
+    }
+}
