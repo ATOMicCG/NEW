@@ -66,6 +66,23 @@ switch ($action) {
             echo json_encode(['error' => 'Неверный логин или пароль']);
             exit;
         }
+        // --- Обновляем last_activity ---
+        $index = array_search($user['id'], array_column($operators, 'id'));
+        if ($index !== false) {
+            // Создаём объект DateTime с временной зоной UTC+3
+            $dt = new DateTime('now', new DateTimeZone('Etc/GMT-3')); // GMT-3 = UTC+3
+            $operators[$index]['last_activity'] = $dt->format('Y-m-d H:i:s'); // Формат даты/времени
+
+            if (!file_put_contents($path, json_encode($operators, JSON_PRETTY_PRINT))) {
+                log_error("Не удалось обновить last_activity в users.json: $path");
+                http_response_code(500);
+                echo json_encode(['error' => 'Не удалось обновить активность пользователя']);
+                exit;
+            }
+        } else {
+            log_error("Не удалось найти индекс пользователя для обновления last_activity: ID {$user['id']}");
+        }
+
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['login'] = $user['login'];
         echo json_encode(['success' => true]);
