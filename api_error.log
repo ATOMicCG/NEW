@@ -1,0 +1,18 @@
+2025-09-30 12:16:54 - Invalid JSON in users.json: /var/www/html/pinger/operators/users.json
+2025-09-30 12:17:48 - Invalid JSON in users.json: /var/www/html/pinger/operators/users.json
+2025-09-30 12:22:30 - Operator ID required for delete_operator
+2025-09-30 12:24:46 - Operator ID required for delete_operator
+2025-09-30 12:26:00 - Operator ID required for delete_operator
+2025-09-30 12:27:37 - Operator ID required for delete_operator
+2025-09-30 13:39:57 - File not found: /var/www/html/pinger/icons/mainlogo.png
+2025-09-30 13:40:29 - File not found: /var/www/html/pinger/icons/mainlogo.png
+2025-09-30 13:40:41 - Directory and file required for get_file
+2025-09-30 13:41:51 - File not found: /var/www/html/pinger/icons/mainlogo.png
+2025-09-30 13:41:58 - Directory and file required for get_file
+2025-09-30 13:45:15 - get_file called with dir: 'icons', file: 'mainlogo.png'
+2025-09-30 13:45:15 - File not found: /var/www/html/pinger/icons/mainlogo.png
+2025-09-30 13:45:43 - get_file called with dir: '', file: ''
+2025-09-30 13:45:43 - Directory and file required for get_file
+2025-09-30 13:46:54 - get_file called with dir: 'icons', file: 'mainlogo.png'
+2025-09-30 13:48:18 - get_file called with dir: 'icons', file: 'mainlogo.png'
+2025-09-30 13:49:13 - get_file called with dir: 'icons', file: 'mainlogo.png'

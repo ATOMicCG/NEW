@@ -1,0 +1,128 @@
+/* Стили для страницы операторов */
+#workspace h2 {
+    text-align: center;
+    color: #FFC107;
+    margin: 20px 0;
+}
+
+.operator-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.operator-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.operator-buttons button:hover {
+    background-color: #555;
+}
+
+#operators-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#operators-table th,
+#operators-table td {
+    border: 1px solid #FFC107;
+    padding: 8px;
+    text-align: left;
+    color: #FFC107;
+}
+
+#operators-table th {
+    background-color: #444;
+}
+
+#operators-table tbody tr:hover {
+    background-color: #555;
+}
+
+#operators-table tbody tr.selected {
+    background-color: #666;
+}
+
+/* Стили для модального окна */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: #333;
+    color: #FFC107;
+    width: 960px; /* 50% от 1920px */
+    height: 540px; /* 50% от 1080px */
+    border: 2px solid #FFC107;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content h3 {
+    text-align: center;
+    margin: 0 0 20px 0;
+    color: #FFC107;
+}
+
+#operator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#operator-form label {
+    display: flex;
+    flex-direction: column;
+    color: #FFC107;
+}
+
+#operator-form input,
+#operator-form select {
+    padding: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+}
+
+#operator-form input[type="password"] {
+    -webkit-text-security: disc; /* Скрытие пароля */
+}
+
+.modal-form-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-form-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-form-buttons button:hover {
+    background-color: #555;
+}

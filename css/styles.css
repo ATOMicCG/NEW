@@ -1,0 +1,332 @@
+/* Основные стили для страницы */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #333;
+}
+
+/* Стили для меню */
+#main-menu {
+    background-color: #333;
+    color: #FFC107;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 5px 0;
+    border-bottom: 2px solid #FFC107;
+}
+
+#main-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+#main-menu .menu-item {
+    position: relative;
+    padding: 5px 15px;
+}
+
+#main-menu .menu-item span {
+    cursor: pointer;
+    color: #FFC107;
+}
+
+#main-menu .menu-item .back-button {
+    color: #FFC107;
+    text-decoration: none;
+}
+
+#main-menu .menu-item .back-button:hover {
+    background-color: #555;
+}
+
+#main-menu .submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #444;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#main-menu .menu-item:hover .submenu {
+    display: block;
+}
+
+#main-menu .submenu li {
+    padding: 10px;
+}
+
+#main-menu .submenu li a {
+    color: #FFC107;
+    text-decoration: none;
+    display: block;
+}
+
+#main-menu .submenu li a:hover {
+    background-color: #555;
+}
+
+/* Кнопка Редактировать */
+#main-menu .edit-button {
+    margin-left: auto;
+}
+
+#main-menu .edit-button button {
+    background-color: #333;
+    color: #FFC107;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+#main-menu .edit-button button:hover {
+    background-color: #555;
+}
+
+#main-menu .edit-button button.active {
+    background-color: #FFC107;
+    color: #333;
+}
+
+/* Рабочее пространство */
+#workspace {
+    margin-top: 40px;
+    padding: 10px;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Вкладки */
+#tabs {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+#tabs button {
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+}
+
+#tabs button:hover {
+    background-color: #555;
+}
+
+#tabs button.active {
+    background-color: #FFC107;
+    color: #333;
+}
+
+/* SVG-полотно */
+#map {
+/*    border: 2px solid #424242; */
+    border-radius: 12px;
+    box-shadow: 0 0 0 3px #3d3d3d, 0 4px 15px rgba(0,0,0,0.2);
+
+    width: 100%;
+    height: 780px;
+    background-color: #008080;
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+}
+
+/* Элементы карты */
+.node {
+    cursor: pointer;
+}
+
+.link {
+    stroke-width: 2;
+}
+
+.frame {
+    stroke-dasharray: 5;
+}
+
+/* Модальное окно */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #333;
+    padding: 20px;
+    border-radius: 4px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid #FFC107;
+}
+
+.modal-content h2 {
+    text-align: center;
+    color: #FFC107;
+    margin: 0 0 20px 0;
+    font-size: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.form-group input {
+    padding: 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #444;
+    color: #FFC107;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #FFC107;
+}
+
+.error-message {
+    color: #FFC107;
+    text-align: center;
+    margin-bottom: 15px;
+    display: none;
+    font-size: 14px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.modal-actions button {
+    padding: 10px 20px;
+    background-color: #333;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+}
+
+.modal-actions button:hover {
+    background-color: #555;
+}
+
+/* Таблица для списка карт */
+#map-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+#map-list-table th,
+#map-list-table td {
+    padding: 10px;
+    border: 1px solid #555;
+    color: #FFC107;
+    text-align: left;
+}
+
+#map-list-table th {
+    background-color: #444;
+}
+
+#map-list-table tbody tr:hover {
+    background-color: #555;
+    cursor: pointer;
+}
+
+#map-list-table tbody tr.selected {
+    background-color: #75736b;
+    color: #333;
+}
+
+/* Контекстное меню */
+#context-menu {
+    position: absolute;
+    background-color: #444;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    min-width: 150px;
+}
+
+#context-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#context-menu .context-menu-item {
+    position: relative;
+    padding: 10px;
+}
+
+#context-menu .context-menu-item span {
+    color: #FFC107;
+    cursor: pointer;
+}
+
+#context-menu .context-menu-item a {
+    color: #FFC107;
+    text-decoration: none;
+    display: block;
+}
+
+#context-menu .context-menu-item:hover {
+    background-color: #555;
+}
+
+#context-menu .context-submenu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    background-color: #444;
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#context-menu .context-menu-item:hover .context-submenu {
+    display: block;
+}
+
+#context-menu .context-submenu li {
+    padding: 10px;
+}
+
+#context-menu .context-submenu li a {
+    color: #FFC107;
+    text-decoration: none;
+    display: block;
+}
+
+#context-menu .context-submenu li a:hover {
+    background-color: #555;
+}

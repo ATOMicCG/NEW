@@ -1,0 +1,20 @@
+RewriteEngine On
+RewriteBase /pinger/
+
+<FilesMatch "\.(json|png|svg)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+RewriteRule ^(maps|operators|models|images|icons)/(.+)$ api.php?action=get_file&dir=$1&file=$2 [L]
+
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule \.(css|js|png|jpg|jpeg|gif|svg|php)$ - [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !/login\.php
+RewriteRule ^ index.php [L]
+
+RewriteCond %{REQUEST_URI} /login\.php\?action=logout
+RewriteRule ^ login.php [L]
