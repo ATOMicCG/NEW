@@ -1,0 +1,104 @@
+/* Стили для страницы VLAN */
+#workspace h2 {
+    text-align: center;
+    color: #FFC107;
+    margin: 20px 0;
+}
+
+.vlan-columns {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.column {
+    flex: 1;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 15px;
+    background-color: #444;
+}
+
+.column h3 {
+    color: #FFC107;
+    margin: 0 0 15px 0;
+    text-align: center;
+    font-size: 18px;
+}
+
+#vlan-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#vlan-table th,
+#vlan-table td {
+    padding: 10px;
+    border: 1px solid #555;
+    color: #FFC107;
+    text-align: left;
+}
+
+#vlan-table th {
+    background-color: #555;
+}
+
+#vlan-table tbody tr:hover {
+    background-color: #666;
+    cursor: pointer;
+}
+
+#vlan-table tbody tr.selected {
+    background-color: #75736b;
+    color: #333;
+}
+
+#vlan-form .form-group {
+    margin-bottom: 15px;
+}
+
+#vlan-form .form-group label {
+    color: #FFC107;
+    margin-bottom: 5px;
+    display: block;
+}
+
+#vlan-form .form-group input {
+    width: 100%;
+    padding: 10px;
+    background-color: #333;
+    color: #FFC107;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#vlan-form .form-group input:focus {
+    outline: none;
+    border-color: #FFC107;
+}
+
+#vlan-error {
+    color: #FFC107;
+    text-align: center;
+    margin-bottom: 15px;
+    display: none;
+    font-size: 14px;
+}
+
+.vlan-actions button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #333;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.vlan-actions button:hover {
+    background-color: #555;
+}

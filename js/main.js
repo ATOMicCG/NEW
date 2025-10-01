@@ -2,6 +2,7 @@
 const openMaps = []; // Массив открытых карт
 let activeMapId = null; // ID активной карты
 let selectedMapId = null; // Выбранная карта в модальном окне
+let mapData = { nodes: [], links: [], last_modified_by: window.currentUser }; // Текущие данные карты
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
@@ -25,6 +26,8 @@ function initializeEventListeners() {
     d3.select('#edit-map').on('click', () => toggleEditMode());
     // Обработчик контекстного меню
     d3.select('#map').on('contextmenu', showContextMenu);
+    // Обработчик создания свитча
+    d3.select('#create-switch').on('click', () => showCreateSwitchModal());
 }
 
 // Сохранение открытых карт в cookies
@@ -80,22 +83,26 @@ async function updateTabs() {
     tabSelection.on('click', async (event, d) => {
         try {
             const response = await fetch(`/pinger/api.php?action=load_map&id=${d.id}`);
-            const mapData = await response.json();
+            const mapDataResponse = await response.json();
 
-            if (mapData.error) {
-                console.error('Load map failed:', mapData.error);
-                d3.select('#open-map-error').text(mapData.error).style('display', 'block');
+            if (mapDataResponse.error) {
+                console.error('Load map failed:', mapDataResponse.error);
+                d3.select('#open-map-error').text(mapDataResponse.error).style('display', 'block');
                 return;
             }
 
-            console.log('Load map raw response:', mapData);
+            console.log('Load map raw response:', mapDataResponse);
 
             // Проверка наличия данных
-            if (!mapData.nodes || !mapData.links) {
+            if (!mapDataResponse.nodes || !mapDataResponse.links) {
                 console.error('Load map failed: Invalid map data');
                 d3.select('#open-map-error').text('Неверные данные карты').style('display', 'block');
                 return;
             }
+
+            // Обновляем глобальные данные карты
+            mapData = mapDataResponse;
+            mapData.last_modified_by = window.currentUser;
 
             // Обновляем активную вкладку
             activeMapId = d.id;
@@ -148,21 +155,25 @@ async function loadMapsList() {
 async function openMap(mapId) {
     try {
         const response = await fetch(`/pinger/api.php?action=load_map&id=${mapId}`);
-        const mapData = await response.json();
+        const mapDataResponse = await response.json();
 
-        if (mapData.error) {
-            console.error('Load map failed:', mapData.error);
-            d3.select('#open-map-error').text(mapData.error).style('display', 'block');
+        if (mapDataResponse.error) {
+            console.error('Load map failed:', mapDataResponse.error);
+            d3.select('#open-map-error').text(mapDataResponse.error).style('display', 'block');
             return;
         }
 
-        console.log('Load map raw response:', mapData);
+        console.log('Load map raw response:', mapDataResponse);
 
-        if (!mapData.nodes || !mapData.links) {
+        if (!mapDataResponse.nodes || !mapDataResponse.links) {
             console.error('Load map failed: Invalid map data');
             d3.select('#open-map-error').text('Неверные данные карты').style('display', 'block');
             return;
         }
+
+        // Обновляем глобальные данные карты
+        mapData = mapDataResponse;
+        mapData.last_modified_by = window.currentUser;
 
         // Добавляем карту в openMaps
         if (!openMaps.find(m => m.id === mapId)) {
@@ -191,19 +202,20 @@ function closeTab(mapId) {
             openMap(activeMapId);
         } else {
             clearMap();
+            mapData = { nodes: [], links: [], last_modified_by: window.currentUser };
         }
     }
     updateTabs();
 }
 
 // Отрисовка карты
-function renderMap(mapData) {
+function renderMap(data) {
     const svg = d3.select('#map');
     svg.selectAll('*').remove();
 
     // Отрисовка узлов
     const nodes = svg.selectAll('.node')
-        .data(mapData.nodes || [])
+        .data(data.nodes || [])
         .enter()
         .append('g')
         .attr('class', 'node')
@@ -223,7 +235,7 @@ function renderMap(mapData) {
 
     // Отрисовка связей
     const links = svg.selectAll('.link')
-        .data(mapData.links || [])
+        .data(data.links || [])
         .enter()
         .append('line')
         .attr('class', 'link')
@@ -252,7 +264,8 @@ function showMapNameModal() {
         }
         openMaps.push({ id: name, name, active: true });
         activeMapId = name;
-        renderMap({ nodes: [], links: [] });
+        mapData = { nodes: [], links: [], last_modified_by: window.currentUser };
+        renderMap(mapData);
         updateTabs();
         d3.select('#map-name-modal').style('display', 'none');
         d3.select('#map-name-input').property('value', '');
@@ -283,17 +296,84 @@ function showOpenMapModal() {
     });
 }
 
+// Показать модальное окно для создания свитча
+function showCreateSwitchModal() {
+    let modal = d3.select('#create-switch-modal');
+    if (modal.empty()) {
+        // Создаём модальное окно, если его нет
+        modal = d3.select('body').append('div')
+            .attr('id', 'create-switch-modal')
+            .attr('class', 'modal')
+            .style('display', 'flex');
+        modal.append('div')
+            .attr('class', 'modal-content')
+            .html(`
+                <h2>Создать свитч</h2>
+                <div class="form-group">
+                    <label for="switch-name">Название</label>
+                    <input type="text" id="switch-name" placeholder="Название свитча">
+                </div>
+                <div class="form-group">
+                    <label for="switch-model">Модель</label>
+                    <select id="switch-model">
+                        <option value="">Выберите модель</option>
+                        <option value="model_68dce9a2da5fe">DES 3200-10</option>
+                    </select>
+                </div>
+                <div id="create-switch-error" class="error-message"></div>
+                <div class="modal-actions">
+                    <button id="create-switch-ok">ОК</button>
+                    <button id="create-switch-cancel">Отмена</button>
+                </div>
+            `);
+    } else {
+        modal.style('display', 'flex');
+    }
+    d3.select('#create-switch-error').style('display', 'none');
+    d3.select('#switch-name').node().focus();
+
+    // Обработчики кнопок
+    d3.select('#create-switch-ok').on('click', () => {
+        const name = d3.select('#switch-name').property('value').trim();
+        const model = d3.select('#switch-model').property('value');
+        if (!name || !model) {
+            d3.select('#create-switch-error').text('Заполните все поля').style('display', 'block');
+            return;
+        }
+        if (!activeMapId) {
+            d3.select('#create-switch-error').text('Нет активной карты').style('display', 'block');
+            return;
+        }
+        // Добавляем свитч как узел
+        const newNode = {
+            id: `switch_${Date.now()}`,
+            name: name,
+            model: model,
+            type: 'switch',
+            x: 100, // Позиция по умолчанию
+            y: 100
+        };
+        mapData.nodes.push(newNode);
+        renderMap(mapData);
+        saveMap(); // Сохраняем карту
+        d3.select('#create-switch-modal').style('display', 'none');
+        d3.select('#switch-name').property('value', '');
+        d3.select('#switch-model').property('value', '');
+    });
+    d3.select('#create-switch-cancel').on('click', () => {
+        d3.select('#create-switch-modal').style('display', 'none');
+        d3.select('#switch-name').property('value', '');
+        d3.select('#switch-model').property('value', '');
+        d3.select('#create-switch-error').style('display', 'none');
+    });
+}
+
 // Сохранение карты
 async function saveMap() {
     if (!activeMapId) {
         alert('Нет активной карты для сохранения');
         return;
     }
-    const mapData = {
-        nodes: [], // Здесь должна быть логика для получения текущих узлов
-        links: [], // Здесь должна быть логика для получения текущих связей
-        last_modified_by: window.currentUser
-    };
     try {
         const response = await fetch(`/pinger/api.php?action=save_map&id=${activeMapId}`, {
             method: 'POST',
@@ -318,12 +398,14 @@ function toggleEditMode() {
     const editButton = d3.select('#edit-map');
     const isEditing = editButton.classed('active');
     editButton.classed('active', !isEditing);
-    // Добавить логику для включения/выключения редактирования
 }
 
 // Показать контекстное меню
 function showContextMenu(event) {
     event.preventDefault();
+    if (!d3.select('#edit-map').classed('active')) {
+        return; // ПКМ работает только в режиме редактирования
+    }
     const menu = d3.select('#context-menu');
     menu.style('display', 'block')
         .style('left', `${event.pageX}px`)

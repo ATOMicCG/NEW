@@ -35,7 +35,7 @@ if (!isset($_SESSION['user_id'])) {
                     <li><a href="/pinger/operators.php">Операторы</a></li>
                     <li><a href="#" id="technicians">Техники</a></li>
                     <li><a href="/pinger/models.php" id="models">Модели</a></li>
-                    <li><a href="#" id="vlan-management">Упр. VLAN</a></li>
+                    <li><a href="/pinger/mngmtvlan.php" id="vlan-management">Упр. VLAN</a></li>
                     <li><a href="#" id="firmware">Прошивки</a></li>
                 </ul>
             </li>
