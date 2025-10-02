@@ -552,6 +552,149 @@ switch ($action) {
         echo json_encode(['success' => true]);
         break;
         
+        case 'list_groups':
+        $path = __DIR__ . '/operators/groups.json';
+        if (!file_exists($path)) {
+            log_error("groups.json не найден: $path");
+            http_response_code(404);
+            echo json_encode(['error' => 'groups.json не найден']);
+            exit;
+        }
+        $data = json_decode(file_get_contents($path), true);
+        if ($data === null) {
+            log_error("Неверный JSON в groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных']);
+            exit;
+        }
+        echo json_encode($data);
+        break;
+
+    case 'get_group':
+        $id = $_GET['id'] ?? '';
+        if (!$id) {
+            log_error("Требуется ID для get_group");
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуется ID группы']);
+            exit;
+        }
+        $path = __DIR__ . '/operators/groups.json';
+        if (!file_exists($path)) {
+            log_error("groups.json не найден: $path");
+            http_response_code(404);
+            echo json_encode(['error' => 'groups.json не найден']);
+            exit;
+        }
+        $groups = json_decode(file_get_contents($path), true);
+        if ($groups === null) {
+            log_error("Неверный JSON в groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных']);
+            exit;
+        }
+        $group = array_filter($groups, fn($g) => $g['id'] == $id);
+        if (empty($group)) {
+            log_error("Группа не найдена: $id");
+            http_response_code(404);
+            echo json_encode(['error' => 'Группа не найдена']);
+            exit;
+        }
+        echo json_encode(array_values($group)[0]);
+        break;
+
+    case 'save_group':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для save_group");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/operators/groups.json';
+        if (!file_exists($path)) {
+            log_error("groups.json не найден, создаём: $path");
+            file_put_contents($path, '[]');
+        }
+        $groups = json_decode(file_get_contents($path), true);
+        if ($groups === null) {
+            log_error("Неверный JSON в groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'], $data['name'], $data['permissions'])) {
+            log_error("Недостаточно данных для save_group: " . json_encode($data));
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуются все обязательные поля']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($groups, 'id'));
+        if ($index !== false) {
+            $groups[$index]['name'] = $data['name'];
+            $groups[$index]['permissions'] = $data['permissions'];
+        } else {
+            $groups[] = [
+                'id' => $data['id'],
+                'name' => $data['name'],
+                'permissions' => $data['permissions']
+            ];
+        }
+        if (!file_put_contents($path, json_encode($groups, JSON_PRETTY_PRINT))) {
+            log_error("Не удалось записать groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Группа сохранена: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
+    case 'delete_group':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для delete_group");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'])) {
+            log_error("Требуется ID для delete_group");
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуется ID группы']);
+            exit;
+        }
+        $path = __DIR__ . '/operators/groups.json';
+        if (!file_exists($path)) {
+            log_error("groups.json не найден: $path");
+            http_response_code(404);
+            echo json_encode(['error' => 'groups.json не найден']);
+            exit;
+        }
+        $groups = json_decode(file_get_contents($path), true);
+        if ($groups === null) {
+            log_error("Неверный JSON в groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($groups, 'id'));
+        if ($index === false) {
+            log_error("Группа не найдена для удаления: " . $data['id']);
+            http_response_code(404);
+            echo json_encode(['error' => 'Группа не найдена']);
+            exit;
+        }
+        array_splice($groups, $index, 1);
+        if (!file_put_contents($path, json_encode($groups, JSON_PRETTY_PRINT))) {
+            log_error("Не удалось записать groups.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Группа удалена: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+        
     default:
         log_error("Неизвестное действие: $action");
         http_response_code(400);

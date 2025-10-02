@@ -119,7 +119,7 @@
 }
 
 .permissions-column {
-    max-height: 560px; /* Увеличено с 400px */
+    max-height: 616px; /* Увеличено с 400px */
     overflow-y: auto;
 }
 
@@ -178,4 +178,92 @@
     flex-direction: row;
     align-items: center;
     color: #FFC107;
+}
+
+/* Стили для модального окна групп */
+#group-modal .modal-content {
+    width: 1200px;
+    height: 750px;
+}
+
+
+#group-error {
+    color: #FF5555;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#group-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.group-list-column,
+.group-details-column {
+    flex: 1;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.group-details-column {
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+/* Унифицированные стили для заголовков колонок */
+.operator-column h4,
+.permissions-column h4,
+#group-form .form-column h4 {
+    color: #FFC107;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+/* Стили для списка групп */
+#group-list {
+    width: 100%;
+    padding: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    height: 100%; /* Адаптация к высоте колонки */
+}
+
+/* Стили для чекбоксов в окне групп */
+#group-form .checkbox-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    color: #FFC107;
+}
+
+#group-form input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #FFC107;
+}
+
+/* Стили для меток в окне групп */
+#group-form label {
+    color: #FFC107;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Уточнение для метки с input, чтобы избежать конфликта с checkbox-label */
+#group-form label:not(.checkbox-label) input {
+    margin-left: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 4px;
 }
