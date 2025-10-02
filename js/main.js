@@ -301,74 +301,426 @@ function showOpenMapModal() {
 
 // Показать модальное окно для создания свитча
 function showCreateSwitchModal() {
-    let modal = d3.select('#create-switch-modal');
+    const modal = d3.select('#create-switch-modal');
     if (modal.empty()) {
-        // Создаём модальное окно, если его нет
-        modal = d3.select('body').append('div')
-            .attr('id', 'create-switch-modal')
-            .attr('class', 'modal')
-            .style('display', 'flex');
-        modal.append('div')
-            .attr('class', 'modal-content')
-            .html(`
-                <h2>Создать свитч</h2>
-                <div class="form-group">
-                    <label for="switch-name">Название</label>
-                    <input type="text" id="switch-name" placeholder="Название свитча">
-                </div>
-                <div class="form-group">
-                    <label for="switch-model">Модель</label>
-                    <select id="switch-model">
-                        <option value="">Выберите модель</option>
-                        <option value="model_68dce9a2da5fe">DES 3200-10</option>
-                    </select>
-                </div>
-                <div id="create-switch-error" class="error-message"></div>
-                <div class="modal-actions">
-                    <button id="create-switch-ok">ОК</button>
-                    <button id="create-switch-cancel">Отмена</button>
-                </div>
-            `);
-    } else {
-        modal.style('display', 'flex');
+        console.error('Модальное окно не найдено');
+        alert('Ошибка: Модальное окно для создания свитча не найдено. Проверьте загрузку addswitch.php.');
+        return;
     }
-    d3.select('#create-switch-error').style('display', 'none');
+    modal.style('display', 'flex');
     d3.select('#switch-name').node().focus();
 
-    // Обработчики кнопок
-    d3.select('#create-switch-ok').on('click', () => {
+    // Очистка формы
+    resetSwitchForm();
+
+    // Функция для обработки ошибок загрузки JSON
+    function handleJsonError(err, fileName, responseText, contentType) {
+        console.error(`Ошибка загрузки ${fileName}:`, err);
+        console.log(`Текст ответа (${fileName}):`, responseText);
+        console.log(`Content-Type (${fileName}):`, contentType);
+    }
+
+    // Резервные данные на случай ошибки
+    const fallbackData = {
+        models: [{ id: 'model_1', model_name: 'DES 3200-10', mag_ports: '1-2', uplink: 'port3' }],
+        vlans: [{ id: 'vlan1', name: 'VLAN 1' }],
+        masters: [{ id: 'master_1', fio: 'Тест Мастер' }],
+        firmwares: [{ id: 'firmware_1', model_name: 'DES 3200-10', firmware: 'test_firmware' }]
+    };
+
+    // Загрузка моделей
+    fetch('/pinger/models/models.json', { credentials: 'include' })
+        .then(res => {
+            const contentType = res.headers.get('Content-Type');
+            if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Неверный Content-Type: ${contentType}`);
+            }
+            return res.text();
+        })
+        .then(text => {
+            try {
+                const models = JSON.parse(text);
+                const modelSelect = d3.select('#switch-model');
+                modelSelect.selectAll('option:not(:first-child)').remove();
+                modelSelect.selectAll('option.model')
+                    .data(models)
+                    .enter()
+                    .append('option')
+                    .attr('class', 'model')
+                    .attr('value', d => d.id)
+                    .text(d => d.model_name);
+            } catch (err) {
+                console.log('Содержимое models.json:', text);
+                throw new Error(`Ошибка парсинга models.json: ${err.message}`);
+            }
+        })
+        .catch(err => {
+            handleJsonError(err, 'models.json', err.message, 'unknown');
+            const modelSelect = d3.select('#switch-model');
+            modelSelect.selectAll('option:not(:first-child)').remove();
+            modelSelect.selectAll('option.model')
+                .data(fallbackData.models)
+                .enter()
+                .append('option')
+                .attr('class', 'model')
+                .attr('value', d => d.id)
+                .text(d => d.model_name);
+        });
+
+    // Загрузка VLAN
+    fetch('/pinger/lists/mngmtvlan.json', { credentials: 'include' })
+        .then(res => {
+            const contentType = res.headers.get('Content-Type');
+            if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Неверный Content-Type: ${contentType}`);
+            }
+            return res.text();
+        })
+        .then(text => {
+            try {
+                const vlans = JSON.parse(text);
+                const vlanSelect = d3.select('#switch-vlan');
+                vlanSelect.selectAll('option:not(:first-child)').remove();
+                vlanSelect.selectAll('option.vlan')
+                    .data(vlans)
+                    .enter()
+                    .append('option')
+                    .attr('class', 'vlan')
+                    .attr('value', d => d.id)
+                    .text(d => `${d.id} (${d.gateway}${d.mask})`);
+            } catch (err) {
+                console.log('Содержимое mngmtvlan.json:', text);
+                throw new Error(`Ошибка парсинга mngmtvlan.json: ${err.message}`);
+            }
+        })
+        .catch(err => {
+            handleJsonError(err, 'mngmtvlan.json', err.message, 'unknown');
+            const vlanSelect = d3.select('#switch-vlan');
+            vlanSelect.selectAll('option:not(:first-child)').remove();
+            vlanSelect.selectAll('option.vlan')
+                .data(fallbackData.vlans)
+                .enter()
+                .append('option')
+                .attr('class', 'vlan')
+                .attr('value', d => d.id)
+                .text(d => d.name);
+        });
+
+    // Загрузка мастеров
+    fetch('/pinger/lists/masters.json', { credentials: 'include' })
+        .then(res => {
+            const contentType = res.headers.get('Content-Type');
+            if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Неверный Content-Type: ${contentType}`);
+            }
+            return res.text();
+        })
+        .then(text => {
+            try {
+                const masters = JSON.parse(text);
+                const masterSelect = d3.select('#switch-master');
+                masterSelect.selectAll('option:not(:first-child)').remove();
+                masterSelect.selectAll('option.master')
+                    .data(masters)
+                    .enter()
+                    .append('option')
+                    .attr('class', 'master')
+                    .attr('value', d => d.id)
+                    .text(d => d.fio);
+            } catch (err) {
+                console.log('Содержимое masters.json:', text);
+                throw new Error(`Ошибка парсинга masters.json: ${err.message}`);
+            }
+        })
+        .catch(err => {
+            handleJsonError(err, 'masters.json', err.message, 'unknown');
+            const masterSelect = d3.select('#switch-master');
+            masterSelect.selectAll('option:not(:first-child)').remove();
+            masterSelect.selectAll('option.master')
+                .data(fallbackData.masters)
+                .enter()
+                .append('option')
+                .attr('class', 'master')
+                .attr('value', d => d.id)
+                .text(d => d.fio);
+        });
+
+    // Загрузка прошивок
+    fetch('/pinger/lists/firmware.json', { credentials: 'include' })
+        .then(res => {
+            const contentType = res.headers.get('Content-Type');
+            if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error(`Неверный Content-Type: ${contentType}`);
+            }
+            return res.text();
+        })
+        .then(text => {
+            try {
+                const firmwares = JSON.parse(text);
+                const firmwareSelect = d3.select('#switch-firmware');
+                firmwareSelect.selectAll('option:not(:first-child)').remove();
+                firmwareSelect.selectAll('option.firmware')
+                    .data(firmwares)
+                    .enter()
+                    .append('option')
+                    .attr('class', 'firmware')
+                    .attr('value', d => d.id)
+                    .text(d => d.model_name);
+            } catch (err) {
+                console.log('Содержимое firmware.json:', text);
+                throw new Error(`Ошибка парсинга firmware.json: ${err.message}`);
+            }
+        })
+        .catch(err => {
+            handleJsonError(err, 'firmware.json', err.message, 'unknown');
+            const firmwareSelect = d3.select('#switch-firmware');
+            firmwareSelect.selectAll('option:not(:first-child)').remove();
+            firmwareSelect.selectAll('option.firmware')
+                .data(fallbackData.firmwares)
+                .enter()
+                .append('option')
+                .attr('class', 'firmware')
+                .attr('value', d => d.id)
+                .text(d => d.model_name);
+        });
+
+    // Автозаполнение магистральных портов и uplink
+    d3.select('#switch-model').on('change', function() {
+        const modelId = this.value;
+        console.log('Выбрана модель с ID:', modelId); // Отладка
+        if (modelId) {
+            fetch(`/pinger/models/${modelId}.json`, { credentials: 'include' })
+                .then(res => {
+                    const contentType = res.headers.get('Content-Type');
+                    if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error(`Неверный Content-Type: ${contentType}`);
+                    }
+                    return res.text();
+                })
+                .then(text => {
+                    try {
+                        const model = JSON.parse(text);
+                        console.log('Данные модели:', model); // Отладка
+                        if (model) {
+                            d3.select('#switch-trunk-ports').property('value', model.mag_ports || '');
+                            d3.select('#switch-uplink').property('value', model.uplink || '');
+                        } else {
+                            console.warn('Модель с ID', modelId, 'не найдена');
+                        }
+                    } catch (err) {
+                        console.log(`Содержимое ${modelId}.json:`, text);
+                        throw new Error(`Ошибка парсинга ${modelId}.json: ${err.message}`);
+                    }
+                })
+                .catch(err => {
+                    handleJsonError(err, `${modelId}.json (автозаполнение)`, err.message, 'unknown');
+                    const model = fallbackData.models.find(m => m.id === modelId);
+                    if (model) {
+                        d3.select('#switch-trunk-ports').property('value', model.mag_ports || '');
+                        d3.select('#switch-uplink').property('value', model.uplink || '');
+                    }
+                });
+        } else {
+            d3.select('#switch-trunk-ports').property('value', '');
+            d3.select('#switch-uplink').property('value', '');
+        }
+    });
+
+    // Копирование данных в Google
+    d3.select('#google-copy').on('click', () => {
+        const master = d3.select('#switch-master option:checked').text();
+        const model = d3.select('#switch-model option:checked').text();
+        const name = d3.select('#switch-name').property('value');
+        const serial = d3.select('#switch-serial').property('value');
+        const mac = d3.select('#switch-mac').property('value');
+        const password = d3.select('#switch-password').property('value');
+        const text = `${master}\t${model}\t${name}\t${serial}\t${mac}\t${password}`;
+        navigator.clipboard.writeText(text)
+            .then(() => alert('Данные скопированы в буфер обмена'))
+            .catch(err => console.error('Ошибка копирования:', err));
+    });
+
+    // Копирование прошивки
+    d3.select('#flash-button').on('click', () => {
+        const firmwareId = d3.select('#switch-firmware').property('value');
+        if (firmwareId) {
+            fetch('/pinger/lists/firmware.json', { credentials: 'include' })
+                .then(res => {
+                    const contentType = res.headers.get('Content-Type');
+                    if (!res.ok) throw new Error(`HTTP ошибка ${res.status}: ${res.statusText}`);
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error(`Неверный Content-Type: ${contentType}`);
+                    }
+                    return res.text();
+                })
+                .then(text => {
+                    try {
+                        const firmwares = JSON.parse(text);
+                        const firmware = firmwares.find(f => f.id === firmwareId);
+                        if (firmware) {
+                            navigator.clipboard.writeText(firmware.firmware)
+                                .then(() => alert('Прошивка скопирована в буфер обмена'))
+                                .catch(err => console.error('Ошибка копирования прошивки:', err));
+                        }
+                    } catch (err) {
+                        console.log('Содержимое firmware.json (прошивка):', text);
+                        throw new Error(`Ошибка парсинга firmware.json: ${err.message}`);
+                    }
+                })
+                .catch(err => {
+                    handleJsonError(err, 'firmware.json (прошивка)', err.message, 'unknown');
+                    const firmware = fallbackData.firmwares.find(f => f.id === firmwareId);
+                    if (firmware) {
+                        navigator.clipboard.writeText(firmware.firmware)
+                            .then(() => alert('Прошивка скопирована в буфер обмена'))
+                            .catch(err => console.error('Ошибка копирования прошивки:', err));
+                    }
+                });
+        } else {
+            alert('Выберите прошивку');
+        }
+    });
+
+    // Добавление свитча
+    d3.select('#add-switch').on('click', () => {
         const name = d3.select('#switch-name').property('value').trim();
         const model = d3.select('#switch-model').property('value');
-        if (!name || !model) {
-            d3.select('#create-switch-error').text('Заполните все поля').style('display', 'block');
+        const vlan = d3.select('#switch-vlan').property('value');
+        const master = d3.select('#switch-master').property('value');
+        const trunkPorts = d3.select('#switch-trunk-ports').property('value');
+        const uplink = d3.select('#switch-uplink').property('value');
+        const mac = d3.select('#switch-mac').property('value');
+        const ip = d3.select('#switch-ip').property('value');
+        const serial = d3.select('#switch-serial').property('value');
+        const password = d3.select('#switch-password').property('value');
+        const responseTime = d3.select('#switch-response-time').property('value');
+
+        if (!name || !model || !vlan || !master) {
+            d3.select('#create-switch-modal .error-message')
+                .text('Заполните обязательные поля: Имя, Модель, VLAN, Мастер')
+                .style('display', 'block');
             return;
         }
+
         if (!activeMapId) {
-            d3.select('#create-switch-error').text('Нет активной карты').style('display', 'block');
+            d3.select('#create-switch-modal .error-message')
+                .text('Нет активной карты')
+                .style('display', 'block');
             return;
         }
-        // Добавляем свитч как узел
+
         const newNode = {
             id: `switch_${Date.now()}`,
             name: name,
             model: model,
+            vlan: vlan,
+            master: master,
+            mag_ports: trunkPorts,
+            uplink: uplink,
+            mac: mac,
+            ip: ip,
+            serial: serial,
+            password: password,
+            response_time: responseTime,
             type: 'switch',
-            x: 100, // Позиция по умолчанию
+            x: 100,
             y: 100
         };
+
         mapData.nodes.push(newNode);
         renderMap(mapData);
-        saveMap(); // Сохраняем карту
-        d3.select('#create-switch-modal').style('display', 'none');
-        d3.select('#switch-name').property('value', '');
-        d3.select('#switch-model').property('value', '');
+        saveMap();
+        modal.style('display', 'none');
+        resetSwitchForm();
     });
+
+    // Сброс формы
+    d3.select('#reset-switch').on('click', () => resetSwitchForm());
+
+    // Отмена
     d3.select('#create-switch-cancel').on('click', () => {
-        d3.select('#create-switch-modal').style('display', 'none');
-        d3.select('#switch-name').property('value', '');
-        d3.select('#switch-model').property('value', '');
-        d3.select('#create-switch-error').style('display', 'none');
+        modal.style('display', 'none');
+        resetSwitchForm();
     });
+
+    // Кнопка "Настроить"
+    d3.select('#configure-switch').on('click', () => {
+        alert('Функция настройки свитча пока не реализована');
+    });
+}
+
+// Сброс формы
+function resetSwitchForm() {
+    d3.select('#switch-name').property('value', '');
+    d3.select('#switch-model').property('value', '');
+    d3.select('#switch-vlan').property('value', '');
+    d3.select('#switch-master').property('value', '');
+    d3.select('#switch-trunk-ports').property('value', '');
+    d3.select('#switch-uplink').property('value', '');
+    d3.select('#switch-mac').property('value', '');
+    d3.select('#switch-ip').property('value', '');
+    d3.select('#switch-serial').property('value', '');
+    d3.select('#switch-password').property('value', '');
+    d3.select('#switch-firmware').property('value', '');
+    d3.select('#switch-response-time').property('value', '60');
+    d3.select('#create-switch-modal .error-message').style('display', 'none');
+}
+
+// Отрисовка карты
+function renderMap(data) {
+    const svg = d3.select('#map');
+    svg.selectAll('*').remove();
+
+    const g = svg.append('g');
+
+    // Отрисовка узлов
+    const node = g.selectAll('.node')
+        .data(data.nodes)
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+    node.filter(d => d.type === 'switch')
+        .append('image')
+        .attr('xlink:href', '/pinger/icons/Router.png')
+        .attr('width', 40)
+        .attr('height', 40)
+        .attr('x', -20)
+        .attr('y', -20)
+        .on('error', function() {
+            console.error('Ошибка загрузки изображения Router.png');
+            d3.select(this).remove();
+            d3.select(this.parentNode)
+                .append('rect')
+                .attr('width', 40)
+                .attr('height', 40)
+                .attr('x', -20)
+                .attr('y', -20)
+                .attr('fill', '#555');
+        });
+
+    node.filter(d => d.type === 'switch')
+        .append('text')
+        .attr('y', 30)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10px')
+        .attr('font-weight', 'bold')
+        .attr('fill', '#FFC107')
+        .text(d => d.name);
+
+    // Перетаскивание узлов
+    node.call(d3.drag()
+        .on('drag', (event, d) => {
+            d.x = event.x;
+            d.y = event.y;
+            d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+        }));
 }
 
 // Сохранение карты

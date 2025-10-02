@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <title>Сетевые карты</title>
     <link rel="stylesheet" href="/pinger/css/styles.css?v=5" type="text/css">
+    <link rel="stylesheet" href="/pinger/css/addswitch.css?v=1" type="text/css">
     <script src="/pinger/lib/d3.v7.min.js"></script>
     <script>
         window.currentUser = '<?php echo addslashes($_SESSION['login'] ?? 'unknown'); ?>';
@@ -46,7 +47,7 @@ if (!isset($_SESSION['user_id'])) {
     </nav>
     <div id="workspace">
         <div id="tabs"></div>
-        <svg id="map" ></svg>
+        <svg id="map"></svg>
         <div id="context-menu" style="display: none;">
             <ul>
                 <li class="context-menu-item">
@@ -66,39 +67,40 @@ if (!isset($_SESSION['user_id'])) {
                 </li>
             </ul>
         </div>
-    </div>
-    <div id="map-name-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>Введите название карты</h2>
-            <div class="form-group">
-                <input type="text" id="map-name-input" placeholder="Название карты" required>
-            </div>
-            <div id="map-name-error" class="error-message"></div>
-            <div class="modal-actions">
-                <button id="map-name-ok">ОК</button>
-                <button id="map-name-cancel">Отмена</button>
-            </div>
-        </div>
-    </div>
-    <div id="open-map-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>Открыть карту</h2>
-            <table id="map-list-table">
-                <thead>
-                    <tr>
-                        <th>Название</th>
-                        <th>Дата и время изменения</th>
-                        <th>Последние изменения</th>
-                    </tr>
-                </thead>
-                <tbody id="map-list-body"></tbody>
-            </table>
-            <div id="open-map-error" class="error-message"></div>
-            <div class="modal-actions">
-                <button id="open-map-ok">ОК</button>
-                <button id="open-map-cancel">Отмена</button>
+        <div id="map-name-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Введите название карты</h2>
+                <div class="form-group">
+                    <input type="text" id="map-name-input" placeholder="Название карты" required>
+                </div>
+                <div id="map-name-error" class="error-message"></div>
+                <div class="modal-actions">
+                    <button id="map-name-ok">ОК</button>
+                    <button id="map-name-cancel">Отмена</button>
+                </div>
             </div>
         </div>
+        <div id="open-map-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Открыть карту</h2>
+                <table id="map-list-table">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Дата и время изменения</th>
+                            <th>Последние изменения</th>
+                        </tr>
+                    </thead>
+                    <tbody id="map-list-body"></tbody>
+                </table>
+                <div id="open-map-error" class="error-message"></div>
+                <div class="modal-actions">
+                    <button id="open-map-ok">ОК</button>
+                    <button id="open-map-cancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+        <?php include 'addswitch.php'; ?>
     </div>
 </body>
 </html>

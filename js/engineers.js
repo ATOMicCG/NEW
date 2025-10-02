@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const engineerList = document.getElementById('engineer-list');
     const addMasterBtn = document.getElementById('add-master');
     const addEngineerBtn = document.getElementById('add-engineer');
+    const editMasterBtn = document.getElementById('edit-master');
+    const deleteMasterBtn = document.getElementById('delete-master');
+    const editEngineerBtn = document.getElementById('edit-engineer');
+    const deleteEngineerBtn = document.getElementById('delete-engineer');
     const masterModal = document.getElementById('master-modal');
     const engineerModal = document.getElementById('engineer-modal');
     const masterForm = document.getElementById('master-form');
@@ -72,20 +76,64 @@ document.addEventListener('DOMContentLoaded', () => {
         loadEngineers(selectedMasterId);
     });
 
-    // Открытие модального окна мастера
+    // Открытие модального окна для добавления мастера
     addMasterBtn.addEventListener('click', () => {
         masterForm.reset();
         masterForm.id.value = Date.now();
         masterErrorDiv.style.display = 'none';
+        masterModal.querySelector('h3').textContent = 'Добавление мастера';
         masterModal.style.display = 'flex';
     });
 
-    // Открытие модального окна техника
+    // Открытие модального окна для редактирования мастера
+    editMasterBtn.addEventListener('click', () => {
+        if (!masterList.value) {
+            alert('Выберите мастера для редактирования');
+            return;
+        }
+        masterForm.id.value = masterList.value;
+        masterForm.fio.value = masterList.options[masterList.selectedIndex].textContent;
+        masterErrorDiv.style.display = 'none';
+        masterModal.querySelector('h3').textContent = 'Редактирование мастера';
+        masterModal.style.display = 'flex';
+    });
+
+    // Удаление мастера
+    deleteMasterBtn.addEventListener('click', () => {
+        if (!masterList.value) {
+            alert('Выберите мастера для удаления');
+            return;
+        }
+        if (!confirm('Вы уверены, что хотите удалить мастера?')) {
+            return;
+        }
+        fetch('/pinger/api.php?action=delete_master', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: masterList.value })
+        })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error || `HTTP Error: ${res.status}`); });
+                }
+                return res.json();
+            })
+            .then(() => {
+                selectedMasterId = null;
+                loadMasters();
+                engineerList.innerHTML = '';
+            })
+            .catch(err => {
+                alert('Ошибка удаления: ' + err.message);
+                console.error('Ошибка удаления мастера:', err);
+            });
+    });
+
+    // Открытие модального окна для добавления техника
     addEngineerBtn.addEventListener('click', () => {
         engineerForm.reset();
         engineerForm.id.value = Date.now();
         engineerErrorDiv.style.display = 'none';
-        // Загрузка мастеров в select
         fetch('/pinger/api.php?action=list_masters')
             .then(res => res.json())
             .then(masters => {
@@ -96,12 +144,92 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.textContent = master.fio;
                     engineerMasterSelect.appendChild(option);
                 });
+                if (selectedMasterId) {
+                    engineerMasterSelect.value = selectedMasterId;
+                }
+                engineerModal.querySelector('h3').textContent = 'Добавление техника';
                 engineerModal.style.display = 'flex';
             })
             .catch(err => {
                 console.error('Ошибка загрузки мастеров:', err);
                 engineerErrorDiv.textContent = 'Ошибка загрузки мастеров: ' + err.message;
                 engineerErrorDiv.style.display = 'block';
+            });
+    });
+
+    // Открытие модального окна для редактирования техника
+    editEngineerBtn.addEventListener('click', () => {
+        if (!engineerList.value) {
+            alert('Выберите техника для редактирования');
+            return;
+        }
+        if (!selectedMasterId) {
+            alert('Выберите мастера участка');
+            return;
+        }
+        fetch(`/pinger/api.php?action=list_engineers&master_id=${selectedMasterId}`)
+            .then(res => res.json())
+            .then(engineers => {
+                const engineer = engineers.find(e => e.id === engineerList.value);
+                if (!engineer) {
+                    throw new Error('Техник не найден');
+                }
+                engineerForm.id.value = engineer.id;
+                engineerForm.fio.value = engineer.fio;
+                engineerErrorDiv.style.display = 'none';
+                fetch('/pinger/api.php?action=list_masters')
+                    .then(res => res.json())
+                    .then(masters => {
+                        engineerMasterSelect.innerHTML = '';
+                        masters.forEach(master => {
+                            const option = document.createElement('option');
+                            option.value = master.id;
+                            option.textContent = master.fio;
+                            engineerMasterSelect.appendChild(option);
+                        });
+                        engineerMasterSelect.value = engineer.master_id;
+                        engineerModal.querySelector('h3').textContent = 'Редактирование техника';
+                        engineerModal.style.display = 'flex';
+                    })
+                    .catch(err => {
+                        console.error('Ошибка загрузки мастеров:', err);
+                        engineerErrorDiv.textContent = 'Ошибка загрузки мастеров: ' + err.message;
+                        engineerErrorDiv.style.display = 'block';
+                    });
+            })
+            .catch(err => {
+                console.error('Ошибка загрузки техника:', err);
+                engineerErrorDiv.textContent = 'Ошибка загрузки техника: ' + err.message;
+                engineerErrorDiv.style.display = 'block';
+            });
+    });
+
+    // Удаление техника
+    deleteEngineerBtn.addEventListener('click', () => {
+        if (!engineerList.value) {
+            alert('Выберите техника для удаления');
+            return;
+        }
+        if (!confirm('Вы уверены, что хотите удалить техника?')) {
+            return;
+        }
+        fetch('/pinger/api.php?action=delete_engineer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: engineerList.value })
+        })
+            .then(res => {
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.error || `HTTP Error: ${res.status}`); });
+                }
+                return res.json();
+            })
+            .then(() => {
+                loadEngineers(selectedMasterId);
+            })
+            .catch(err => {
+                alert('Ошибка удаления: ' + err.message);
+                console.error('Ошибка удаления техника:', err);
             });
     });
 

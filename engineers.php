@@ -29,10 +29,18 @@ if (!isset($_SESSION['user_id'])) {
             <div class="form-column master-column">
                 <h4>Мастер участка</h4>
                 <select id="master-list" size="10"></select>
+                <div class="column-buttons">
+                    <button id="edit-master">Редактировать</button>
+                    <button id="delete-master">Удалить</button>
+                </div>
             </div>
             <div class="form-column engineer-column">
                 <h4>Техники</h4>
                 <select id="engineer-list" size="10"></select>
+                <div class="column-buttons">
+                    <button id="edit-engineer">Редактировать</button>
+                    <button id="delete-engineer">Удалить</button>
+                </div>
             </div>
         </div>
         <div class="engineer-buttons">

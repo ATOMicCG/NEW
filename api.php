@@ -974,6 +974,118 @@ switch ($action) {
         echo json_encode(['success' => true]);
         break;
 
+        case 'delete_master':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для delete_master");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'])) {
+            log_error("Требуется ID для delete_master");
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуется ID мастера']);
+            exit;
+        }
+        // Проверка наличия техников
+        $engineers_path = __DIR__ . '/lists/engineers.json';
+        if (!file_exists($engineers_path)) {
+            log_error("engineers.json не найден, создаём: $engineers_path");
+            file_put_contents($engineers_path, json_encode([]));
+        }
+        $engineers = json_decode(file_get_contents($engineers_path), true);
+        if ($engineers === null) {
+            log_error("Неверный JSON в engineers.json: $engineers_path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в engineers.json']);
+            exit;
+        }
+        if (array_filter($engineers, fn($e) => $e['master_id'] === $data['id'])) {
+            log_error("Нельзя удалить мастера, у которого есть техники: " . $data['id']);
+            http_response_code(400);
+            echo json_encode(['error' => 'Нельзя удалить мастера, у которого есть техники']);
+            exit;
+        }
+        // Удаление мастера
+        $path = __DIR__ . '/lists/masters.json';
+        if (!file_exists($path)) {
+            log_error("masters.json не найден: $path");
+            http_response_code(404);
+            echo json_encode(['error' => 'masters.json не найден']);
+            exit;
+        }
+        $masters = json_decode(file_get_contents($path), true);
+        if ($masters === null) {
+            log_error("Неверный JSON в masters.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в masters.json']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($masters, 'id'));
+        if ($index === false) {
+            log_error("Мастер не найден для удаления: " . $data['id']);
+            http_response_code(404);
+            echo json_encode(['error' => 'Мастер не найден']);
+            exit;
+        }
+        array_splice($masters, $index, 1);
+        if (!file_put_contents($path, json_encode($masters, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            log_error("Не удалось записать masters.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Мастер удалён: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
+    case 'delete_engineer':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для delete_engineer");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'])) {
+            log_error("Требуется ID для delete_engineer");
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуется ID техника']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/engineers.json';
+        if (!file_exists($path)) {
+            log_error("engineers.json не найден: $path");
+            http_response_code(404);
+            echo json_encode(['error' => 'engineers.json не найден']);
+            exit;
+        }
+        $engineers = json_decode(file_get_contents($path), true);
+        if ($engineers === null) {
+            log_error("Неверный JSON в engineers.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в engineers.json']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($engineers, 'id'));
+        if ($index === false) {
+            log_error("Техник не найден для удаления: " . $data['id']);
+            http_response_code(404);
+            echo json_encode(['error' => 'Техник не найден']);
+            exit;
+        }
+        array_splice($engineers, $index, 1);
+        if (!file_put_contents($path, json_encode($engineers, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            log_error("Не удалось записать engineers.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Техник удалён: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
     default:
         log_error("Неизвестное действие: $action");
         http_response_code(400);

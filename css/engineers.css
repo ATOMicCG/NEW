@@ -29,13 +29,12 @@
 .form-columns {
     display: flex;
     gap: 20px;
-    width: 60%;
-    height: 700px;
-    margin: 0 auto;
+    flex-grow: 1;
+    justify-content: center; /* Добавлено для центрирования колонок */
 }
 
 .form-column {
-    flex: 1;
+    flex: 0 1 40%; /* Изменено: уменьшено на 20% от исходного flex: 1 */
     border: 1px solid #FFC107;
     border-radius: 4px;
     padding: 10px;
@@ -59,7 +58,28 @@
     color: #FFC107;
     border: 1px solid #FFC107;
     border-radius: 4px;
-    height: 100%;
+    height: 600px; /* Изменено: установлена фиксированная высота */
+}
+
+/* Стили для кнопок в колонках */
+.column-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.column-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.column-buttons button:hover {
+    background-color: #555;
 }
 
 /* Стили для модального окна */
