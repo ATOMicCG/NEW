@@ -33,10 +33,10 @@ if (!isset($_SESSION['user_id'])) {
                 <span>Опции</span>
                 <ul class="submenu">
                     <li><a href="/pinger/operators.php">Операторы</a></li>
-                    <li><a href="#" id="technicians">Техники</a></li>
+                    <li><a href="/pinger/engineers.php" id="technicians">Техники</a></li>
                     <li><a href="/pinger/models.php" id="models">Модели</a></li>
                     <li><a href="/pinger/mngmtvlan.php" id="vlan-management">Упр. VLAN</a></li>
-                    <li><a href="#" id="firmware">Прошивки</a></li>
+                    <li><a href="/pinger/lists/firmware.php" id="firmware">Прошивки</a></li>
                 </ul>
             </li>
             <li class="menu-item edit-button">

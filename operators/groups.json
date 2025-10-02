@@ -1,0 +1,23 @@
+[
+    {
+        "id": "1759400036003",
+        "name": "\u0442\u0435\u0441\u0442",
+        "permissions": {
+            "edit_maps": true,
+            "edit_syntax": false,
+            "view_global_problems": false,
+            "add_global_problems": false,
+            "view_operators": false,
+            "edit_operators": false,
+            "telnet": false,
+            "flood": false,
+            "configure_switch": false,
+            "reset_firewall": false,
+            "edit_dhcp_mode": false,
+            "inventory": false,
+            "add_discrepancies": false,
+            "global_report_filter": false,
+            "add_global_no_call": false
+        }
+    }
+]

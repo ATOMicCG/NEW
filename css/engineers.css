@@ -1,0 +1,149 @@
+/* Стили для страницы сотрудников СКС */
+#workspace h2 {
+    text-align: center;
+    color: #FFC107;
+    margin: 20px 0;
+}
+
+.engineer-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.engineer-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.engineer-buttons button:hover {
+    background-color: #555;
+}
+
+/* Стили для списков */
+.form-columns {
+    display: flex;
+    gap: 20px;
+    width: 60%;
+    height: 700px;
+    margin: 0 auto;
+}
+
+.form-column {
+    flex: 1;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.master-column h4,
+.engineer-column h4 {
+    color: #FFC107;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+#master-list,
+#engineer-list {
+    width: 100%;
+    padding: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    height: 100%;
+}
+
+/* Стили для модального окна */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background-color: #333;
+    color: #FFC107;
+    width: 600px;
+    padding: 20px;
+    border: 2px solid #FFC107;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content h3 {
+    text-align: center;
+    margin: 0 0 20px 0;
+    color: #FFC107;
+}
+
+#master-error,
+#engineer-error {
+    color: #FF5555;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#master-form,
+#engineer-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+#master-form label,
+#engineer-form label {
+    color: #FFC107;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+#master-form input,
+#engineer-form input,
+#engineer-form select {
+    margin-left: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.modal-form-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-form-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-form-buttons button:hover {
+    background-color: #555;
+}

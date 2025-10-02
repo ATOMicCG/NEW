@@ -695,6 +695,182 @@ switch ($action) {
         echo json_encode(['success' => true]);
         break;
         
+        case 'list_masters':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для list_masters");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/masters.json';
+        if (!file_exists($path)) {
+            log_error("masters.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("masters.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $masters = json_decode($file_content, true);
+        if ($masters === null) {
+            log_error("Неверный JSON в masters.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в masters.json']);
+            exit;
+        }
+        echo json_encode($masters);
+        break;
+
+    case 'save_master':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для save_master");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/masters.json';
+        if (!file_exists($path)) {
+            log_error("masters.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("masters.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $masters = json_decode($file_content, true);
+        if ($masters === null) {
+            log_error("Неверный JSON в masters.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в masters.json']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'], $data['fio'])) {
+            log_error("Недостаточно данных для save_master: " . json_encode($data));
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуются все обязательные поля']);
+            exit;
+        }
+        if (array_filter($masters, fn($m) => $m['fio'] === $data['fio'] && $m['id'] !== $data['id'])) {
+            log_error("Мастер с Ф.И.О. уже существует: " . $data['fio']);
+            http_response_code(400);
+            echo json_encode(['error' => 'Мастер с таким Ф.И.О. уже существует']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($masters, 'id'));
+        if ($index !== false) {
+            $masters[$index]['fio'] = $data['fio'];
+        } else {
+            $masters[] = [
+                'id' => $data['id'],
+                'fio' => $data['fio']
+            ];
+        }
+        if (!file_put_contents($path, json_encode($masters, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            log_error("Не удалось записать masters.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Мастер сохранён: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
+    case 'list_engineers':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для list_engineers");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/engineers.json';
+        if (!file_exists($path)) {
+            log_error("engineers.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("engineers.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $engineers = json_decode($file_content, true);
+        if ($engineers === null) {
+            log_error("Неверный JSON в engineers.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в engineers.json']);
+            exit;
+        }
+        $master_id = $_GET['master_id'] ?? null;
+        if ($master_id) {
+            $engineers = array_filter($engineers, fn($e) => $e['master_id'] === $master_id);
+        }
+        echo json_encode(array_values($engineers));
+        break;
+
+    case 'save_engineer':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для save_engineer");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/engineers.json';
+        if (!file_exists($path)) {
+            log_error("engineers.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("engineers.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $engineers = json_decode($file_content, true);
+        if ($engineers === null) {
+            log_error("Неверный JSON в engineers.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в engineers.json']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'], $data['fio'], $data['master_id'])) {
+            log_error("Недостаточно данных для save_engineer: " . json_encode($data));
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуются все обязательные поля']);
+            exit;
+        }
+        if (array_filter($engineers, fn($e) => $e['fio'] === $data['fio'] && $e['id'] !== $data['id'])) {
+            log_error("Техник с Ф.И.О. уже существует: " . $data['fio']);
+            http_response_code(400);
+            echo json_encode(['error' => 'Техник с таким Ф.И.О. уже существует']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($engineers, 'id'));
+        if ($index !== false) {
+            $engineers[$index]['fio'] = $data['fio'];
+            $engineers[$index]['master_id'] = $data['master_id'];
+        } else {
+            $engineers[] = [
+                'id' => $data['id'],
+                'fio' => $data['fio'],
+                'master_id' => $data['master_id']
+            ];
+        }
+        if (!file_put_contents($path, json_encode($engineers, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            log_error("Не удалось записать engineers.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Техник сохранён: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
     default:
         log_error("Неизвестное действие: $action");
         http_response_code(400);

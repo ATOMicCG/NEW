@@ -1,0 +1,1 @@
+{"id": "test_map", "nodes": [{"id": "node1", "type": "switch", "x": 100, "y": 100, "model": "model_1"}, {"id": "node2", "x": 200, "y": 200}], "links": [{"source": "node1", "target": "node2"}], "last_modified_by": "test"}

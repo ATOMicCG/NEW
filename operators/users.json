@@ -10,14 +10,31 @@
         "last_activity": "2025-09-30 13:30:00"
     },
     {
-        "id": 2,
+        "id": "2",
         "surname": "\u041f\u0435\u0442\u0440\u043e\u0432",
         "name": "\u041f\u0451\u0442\u0440",
-        "login": "petrov",
         "department": "\u0422\u0435\u0445\u043d\u0438\u043a",
+        "login": "petrov",
         "group": "\u0422\u0435\u0445\u043d\u0438\u043a",
-        "password_hash": "$2y$10$4REf8MHRztxS7k2e8Y2J4e1Xz3Yb3Y3Y3Y3Y3Y3Y3Y3Y3Y3Y3Y3Y",
-        "last_activity": "2025-09-30 12:00:00"
+        "password": null,
+        "permissions": {
+            "edit_maps": true,
+            "edit_syntax": true,
+            "view_global_problems": true,
+            "add_global_problems": true,
+            "view_operators": true,
+            "edit_operators": true,
+            "telnet": true,
+            "flood": true,
+            "configure_switch": true,
+            "reset_firewall": true,
+            "edit_dhcp_mode": true,
+            "inventory": true,
+            "add_discrepancies": false,
+            "global_report_filter": false,
+            "add_global_no_call": false
+        },
+        "password_hash": "$2y$10$qlqhUZgBfbgCMJyWvOWrFu8qR7DKOVFW1I7iyGykUROfgfJrB9Rty"
     },
     {
         "id": "1759235347508",
@@ -26,7 +43,34 @@
         "department": "IT",
         "login": "berserk",
         "group": "\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440",
-        "last_activity": "2025-09-30 12:29:19",
+        "last_activity": "2025-10-02 12:39:56",
         "password_hash": "$2y$10$\/biqRL176dDZANVp9NQpXe3F.WJVmU2maNytUIMEzBTkRTrDPVLtG"
+    },
+    {
+        "id": "1759400094043",
+        "surname": "\u041d\u0435\u0441\u0442\u0435\u0440\u0435\u043d\u043a\u043e",
+        "name": "\u041e\u043b\u0435\u0433",
+        "department": "IT",
+        "login": "oleg",
+        "group": "\u0442\u0435\u0441\u0442",
+        "permissions": {
+            "edit_maps": false,
+            "edit_syntax": false,
+            "view_global_problems": false,
+            "add_global_problems": false,
+            "view_operators": false,
+            "edit_operators": false,
+            "telnet": false,
+            "flood": false,
+            "configure_switch": false,
+            "reset_firewall": false,
+            "edit_dhcp_mode": false,
+            "inventory": false,
+            "add_discrepancies": false,
+            "global_report_filter": false,
+            "add_global_no_call": false
+        },
+        "password_hash": "$2y$10$5Oeq24v2l1fR4BL\/sNM1WOeW9hNnXnaXhnySofCCswHe6HIFQY5Wy",
+        "last_activity": "2025-10-02 13:17:31"
     }
 ]
