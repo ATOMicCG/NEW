@@ -1,0 +1,79 @@
+/* Стили для страницы прошивок */
+#workspace h2 {
+    text-align: center;
+    color: #FFC107;
+    margin: 20px 0;
+}
+
+.firmware-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.firmware-buttons button {
+    padding: 8px 16px;
+    background-color: #444;
+    color: #FFC107;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.firmware-buttons button:hover {
+    background-color: #555;
+}
+
+/* Стили для колонок */
+.form-columns {
+    display: flex;
+    gap: 20px;
+    width: 80%;
+    margin: 0 auto;
+    height: 700px;
+}
+
+.form-column {
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.model-column {
+    flex: 2; /* 20% от общей ширины (2/10) */
+}
+
+.firmware-column {
+    flex: 8; /* 80% от общей ширины (8/10) */
+}
+
+.model-column h4,
+.firmware-column h4 {
+    color: #FFC107;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+#model-list {
+    width: 100%;
+    padding: 8px;
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    height: 100%;
+}
+
+#firmware-text {
+    background-color: #444;
+    color: #FFC107;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 8px;
+    resize: none;
+    height: 100%;
+}

@@ -871,6 +871,109 @@ switch ($action) {
         echo json_encode(['success' => true]);
         break;
 
+        case 'list_firmwares':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для list_firmwares");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/models/models.json';
+        if (!file_exists($path)) {
+            log_error("models.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("models.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $models = json_decode($file_content, true);
+        if ($models === null) {
+            log_error("Неверный JSON в models.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в models.json']);
+            exit;
+        }
+        echo json_encode($models);
+        break;
+
+    case 'save_firmware':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для save_firmware");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $path = __DIR__ . '/lists/firmware.json';
+        if (!file_exists($path)) {
+            log_error("firmware.json не найден, создаём: $path");
+            file_put_contents($path, json_encode([]));
+        }
+        $file_content = file_get_contents($path);
+        if ($file_content === '') {
+            log_error("firmware.json пуст, инициализируем: $path");
+            file_put_contents($path, json_encode([]));
+            $file_content = '[]';
+        }
+        $firmwares = json_decode($file_content, true);
+        if ($firmwares === null) {
+            log_error("Неверный JSON в firmware.json: $path, содержимое: " . substr($file_content, 0, 100));
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в firmware.json']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!$data || !isset($data['id'], $data['model_name'], $data['firmware'])) {
+            log_error("Недостаточно данных для save_firmware: " . json_encode($data));
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуются все обязательные поля']);
+            exit;
+        }
+        // Проверка соответствия model_name в models.json
+        $models_path = __DIR__ . '/models/models.json';
+        if (!file_exists($models_path)) {
+            log_error("models.json не найден: $models_path");
+            http_response_code(404);
+            echo json_encode(['error' => 'models.json не найден']);
+            exit;
+        }
+        $models = json_decode(file_get_contents($models_path), true);
+        if ($models === null) {
+            log_error("Неверный JSON в models.json: $models_path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Неверный формат данных в models.json']);
+            exit;
+        }
+        $model = array_filter($models, fn($m) => $m['id'] === $data['id'] && $m['model_name'] === $data['model_name']);
+        if (empty($model)) {
+            log_error("Модель не найдена или название не совпадает: id={$data['id']}, model_name={$data['model_name']}");
+            http_response_code(400);
+            echo json_encode(['error' => 'Модель не найдена или название не совпадает']);
+            exit;
+        }
+        $index = array_search($data['id'], array_column($firmwares, 'id'));
+        if ($index !== false) {
+            $firmwares[$index]['model_name'] = $data['model_name'];
+            $firmwares[$index]['firmware'] = $data['firmware'];
+        } else {
+            $firmwares[] = [
+                'id' => $data['id'],
+                'model_name' => $data['model_name'],
+                'firmware' => $data['firmware']
+            ];
+        }
+        if (!file_put_contents($path, json_encode($firmwares, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+            log_error("Не удалось записать firmware.json: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Прошивка сохранена для модели: " . $data['id']);
+        echo json_encode(['success' => true]);
+        break;
+
     default:
         log_error("Неизвестное действие: $action");
         http_response_code(400);
