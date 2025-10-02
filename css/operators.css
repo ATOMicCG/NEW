@@ -64,11 +64,11 @@
     z-index: 2000;
 }
 
-.modal-content {
+.modal-content-users {
     background-color: #333;
     color: #FFC107;
-    width: 960px; /* 50% от 1920px */
-    height: 540px; /* 50% от 1080px */
+    width: 960px; /* Увеличено с 960px */
+    height: 540px; /* Увеличено с 540px */
     border: 2px solid #FFC107;
     border-radius: 8px;
     padding: 20px;
@@ -82,10 +82,45 @@
     color: #FFC107;
 }
 
+#operator-error {
+    color: #FF5555;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
 #operator-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    flex-grow: 1;
+}
+
+.form-columns {
+    display: flex;
+    gap: 20px;
+    flex-grow: 1;
+}
+
+.form-column {
+    flex: 1;
+    border: 1px solid #FFC107;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.operator-column h4,
+.permissions-column h4 {
+    color: #FFC107;
+    margin: 0 0 10px 0;
+    text-align: center;
+}
+
+.permissions-column {
+    max-height: 560px; /* Увеличено с 400px */
+    overflow-y: auto;
 }
 
 #operator-form label {
@@ -94,7 +129,8 @@
     color: #FFC107;
 }
 
-#operator-form input,
+#operator-form input[type="text"],
+#operator-form input[type="password"],
 #operator-form select {
     padding: 8px;
     background-color: #444;
@@ -105,6 +141,16 @@
 
 #operator-form input[type="password"] {
     -webkit-text-security: disc; /* Скрытие пароля */
+}
+
+#operator-form input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #FFC107;
+}
+
+#operator-form label[for^="permissions"] {
+    flex-direction: row;
+    align-items: center;
 }
 
 .modal-form-buttons {
@@ -125,4 +171,11 @@
 
 .modal-form-buttons button:hover {
     background-color: #555;
+}
+
+#operator-form .checkbox-label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    color: #FFC107;
 }

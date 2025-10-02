@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('operator-modal');
     const form = document.getElementById('operator-form');
+    const errorDiv = document.getElementById('operator-error');
     const tableBody = document.querySelector('#operators-table tbody');
     let selectedOperatorId = null;
 
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(err => {
-                console.error('Error loading operators:', err);
+                console.error('Ошибка загрузки операторов:', err);
                 alert('Ошибка загрузки операторов: ' + err.message);
             });
     }
@@ -44,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.reset();
         form.id.value = Date.now();
         document.getElementById('modal-title').textContent = 'Создать оператора';
+        errorDiv.style.display = 'none';
         modal.style.display = 'flex';
     });
 
@@ -68,11 +70,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 form.login.value = op.login;
                 form.group.value = op.group;
                 form.password.value = '';
+                // Заполняем чекбоксы прав
+                const permissions = op.permissions || {};
+                form.querySelectorAll('input[name^="permissions"]').forEach(input => {
+                    const key = input.name.match(/permissions\[(.+)\]/)[1];
+                    input.checked = !!permissions[key];
+                });
                 document.getElementById('modal-title').textContent = 'Редактировать оператора';
+                errorDiv.style.display = 'none';
                 modal.style.display = 'flex';
             })
             .catch(err => {
-                console.error('Error fetching operator:', err);
+                console.error('Ошибка загрузки оператора:', err);
                 alert('Ошибка загрузки оператора: ' + err.message);
             });
     });
@@ -100,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     loadOperators();
                 })
                 .catch(err => {
-                    console.error('Error deleting operator:', err);
+                    console.error('Ошибка удаления оператора:', err);
                     alert('Ошибка удаления оператора: ' + err.message);
                 });
         }
@@ -109,11 +118,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Отмена/закрытие модального окна
     document.getElementById('cancel-operator').addEventListener('click', () => {
         modal.style.display = 'none';
+        errorDiv.style.display = 'none';
     });
 
     // Сохранение оператора
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+        // Валидация полей
+        const isCreate = document.getElementById('modal-title').textContent === 'Создать оператора';
+        if (!form.surname.value || !form.name.value || !form.department.value || !form.login.value || !form.group.value) {
+            errorDiv.textContent = 'Заполните все обязательные поля!';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        if (isCreate && !form.password.value) {
+            errorDiv.textContent = 'Пароль обязателен при создании оператора!';
+            errorDiv.style.display = 'block';
+            return;
+        }
         const operator = {
             id: form.id.value,
             surname: form.surname.value,
@@ -121,8 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
             department: form.department.value,
             login: form.login.value,
             group: form.group.value,
-            password: form.password.value || null
+            password: form.password.value || null,
+            permissions: {}
         };
+        // Собираем права из чекбоксов
+        form.querySelectorAll('input[name^="permissions"]').forEach(input => {
+            const key = input.name.match(/permissions\[(.+)\]/)[1];
+            operator.permissions[key] = input.checked;
+        });
         fetch('/pinger/api.php?action=save_operator', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -136,11 +164,13 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(() => {
                 modal.style.display = 'none';
+                errorDiv.style.display = 'none';
                 loadOperators();
             })
             .catch(err => {
-                console.error('Error saving operator:', err);
-                alert('Ошибка сохранения оператора: ' + err.message);
+                console.error('Ошибка сохранения оператора:', err);
+                errorDiv.textContent = 'Ошибка сохранения оператора: ' + err.message;
+                errorDiv.style.display = 'block';
             });
     });
 
