@@ -496,7 +496,62 @@ switch ($action) {
         log_error("Модель успешно обновлена: $modelFile");
         echo json_encode(['success' => true]);
         break;
-
+        case 'save_file':
+        if (!isset($_SESSION['user_id'])) {
+            log_error("Не авторизован для save_file");
+            http_response_code(401);
+            echo json_encode(['error' => 'Не авторизован']);
+            exit;
+        }
+        $dir = $_GET['dir'] ?? '';
+        $file = $_GET['file'] ?? '';
+        log_error("save_file вызван с dir: '$dir', file: '$file'");
+        if (!$dir || !$file) {
+            log_error("Требуются директория и файл для save_file - dir: '$dir', file: '$file'");
+            http_response_code(400);
+            echo json_encode(['error' => 'Требуются директория и файл']);
+            exit;
+        }
+        $path = safe_path($dir, $file);
+        log_error("Безопасный путь: $path");
+        if ($path === false) {
+            log_error("Недопустимый путь: $dir/$file");
+            http_response_code(400);
+            echo json_encode(['error' => 'Недопустимый путь']);
+            exit;
+        }
+        $data = json_decode(file_get_contents('php://input'), true);
+        if ($data === null) {
+            log_error("Неверный формат данных для save_file: " . file_get_contents('php://input'));
+            http_response_code(400);
+            echo json_encode(['error' => 'Неверный формат данных']);
+            exit;
+        }
+        if (!is_writable(dirname($path))) {
+            log_error("Директория недоступна для записи: " . dirname($path));
+            http_response_code(500);
+            echo json_encode(['error' => 'Нет прав для записи в директорию']);
+            exit;
+        }
+        if (!file_exists($path)) {
+            log_error("Файл не существует, создаём: $path");
+            if (!file_put_contents($path, '[]')) {
+                log_error("Не удалось создать файл: $path");
+                http_response_code(500);
+                echo json_encode(['error' => 'Не удалось создать файл']);
+                exit;
+            }
+        }
+        if (!file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT))) {
+            log_error("Не удалось записать данные в файл: $path");
+            http_response_code(500);
+            echo json_encode(['error' => 'Ошибка записи файла']);
+            exit;
+        }
+        log_error("Файл успешно сохранён: $path");
+        echo json_encode(['success' => true]);
+        break;
+        
     default:
         log_error("Неизвестное действие: $action");
         http_response_code(400);

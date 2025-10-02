@@ -134,15 +134,19 @@ async function saveVlanList() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(vlans)
         });
+        if (!response.ok) {
+            throw new Error(`HTTP ошибка ${response.status}: ${response.statusText}`);
+        }
         const result = await response.json();
         if (result.error) {
-            console.error('Save VLAN list failed:', result.error);
-            d3.select('#vlan-error').text(result.error).style('display', 'block');
-        } else {
-            d3.select('#vlan-error').style('display', 'none');
+            console.error('Не удалось сохранить список VLAN:', result.error);
+            d3.select('#vlan-error').text(`Ошибка: ${result.error}`).style('display', 'block');
+            return;
         }
+        console.log('Список VLAN сохранён:', result);
+        d3.select('#vlan-error').style('display', 'none');
     } catch (error) {
-        console.error('Save VLAN list failed:', error);
-        d3.select('#vlan-error').text('Ошибка сохранения списка VLAN').style('display', 'block');
+        console.error('Не удалось сохранить список VLAN:', error.message);
+        d3.select('#vlan-error').text(`Ошибка сохранения списка VLAN: ${error.message}`).style('display', 'block');
     }
 }

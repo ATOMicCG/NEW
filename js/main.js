@@ -81,22 +81,26 @@ async function updateTabs() {
 
     // Обработчик клика по вкладке
     tabSelection.on('click', async (event, d) => {
+        if (d.id === activeMapId) return; // Игнорируем клик по уже активной вкладке
         try {
             const response = await fetch(`/pinger/api.php?action=load_map&id=${d.id}`);
+            if (!response.ok) {
+                throw new Error(`HTTP ошибка ${response.status}: ${response.statusText}`);
+            }
             const mapDataResponse = await response.json();
 
             if (mapDataResponse.error) {
-                console.error('Load map failed:', mapDataResponse.error);
-                d3.select('#open-map-error').text(mapDataResponse.error).style('display', 'block');
+                console.error('Не удалось загрузить карту:', mapDataResponse.error);
+                alert(`Ошибка: ${mapDataResponse.error}`);
                 return;
             }
 
-            console.log('Load map raw response:', mapDataResponse);
+            console.log('Данные карты загружены:', mapDataResponse);
 
             // Проверка наличия данных
             if (!mapDataResponse.nodes || !mapDataResponse.links) {
-                console.error('Load map failed: Invalid map data');
-                d3.select('#open-map-error').text('Неверные данные карты').style('display', 'block');
+                console.error('Не удалось загрузить карту: Неверные данные карты');
+                alert('Неверные данные карты');
                 return;
             }
 
@@ -106,14 +110,13 @@ async function updateTabs() {
 
             // Обновляем активную вкладку
             activeMapId = d.id;
-            tabs.selectAll('button').classed('active', false);
-            d3.select(event.currentTarget).classed('active', true);
+            tabs.selectAll('button').classed('active', d2 => d2.id === activeMapId);
 
             // Отрисовываем карту
             renderMap(mapData);
         } catch (error) {
-            console.error('Load map failed:', error);
-            d3.select('#open-map-error').text('Ошибка загрузки карты').style('display', 'block');
+            console.error('Не удалось загрузить карту:', error.message);
+            alert(`Ошибка загрузки карты: ${error.message}`);
         }
     });
 
